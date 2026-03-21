@@ -5,3 +5,5 @@ google-generativeai
 pypdf
 python-pptx
 python-multipart
+python-dotenv
+ 

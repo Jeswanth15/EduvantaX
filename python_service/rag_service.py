@@ -1,4 +1,8 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from pydantic import BaseModel
 import chromadb
@@ -21,7 +25,10 @@ EDU_DIR = os.path.join(REPO_ROOT, "edu")
 UPLOADS_DIR = os.path.join(EDU_DIR, "uploads", "syllabus")
 
 # Configuration
-GEMINI_API_KEY = "AIzaSyDoWzm5ec6PCr0K84P34yCpPnxa4lY3UY0"
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise ValueError("GEMINI_API_KEY environment variable is not set")
+
 genai.configure(api_key=GEMINI_API_KEY)
 
 def get_model():
@@ -176,7 +183,7 @@ async def generate_questions(request: QuestionRequest):
       }},
       ...
     ]
-    """
+    """ 
     
     try:
         # Prompt modified to handle non-JSON mode if needed
