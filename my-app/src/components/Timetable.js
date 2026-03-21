@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from "react";
-import Sidebar from "./Sidebar";
-import Navbar from "./Navbar";
 import { getDecodedToken } from "../utils/authHelper";
 import {
   getAllClassrooms,
@@ -193,110 +191,111 @@ const Timetable = () => {
   };
 
   return (
-    <div style={{ display: "flex" }}>
-      <Sidebar />
-      <div style={{ marginLeft: "250px", flex: 1 }}>
-        <Navbar />
-        <div style={{ padding: "20px" }}>
-          <h2>Manage Timetable</h2>
+    <div className="timetable-page-wrapper">
+      <div style={{ padding: "20px" }}>
+        <h2>Manage Timetable</h2>
 
-          {/* Select Class */}
-          <div style={{ marginBottom: "20px" }}>
-            <select
-              value={selectedClass?.classId || ""}
-              onChange={e =>
-                setSelectedClass(classrooms.find(c => c.classId === Number(e.target.value)))
-              }
-            >
-              <option value="">Select Class & Section</option>
-              {classrooms.map(c => (
-                <option key={c.classId} value={c.classId}>
-                  {c.name} {c.section ? `- ${c.section}` : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Timetable Grid */}
-          {selectedClass && (
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ borderCollapse: "collapse", width: "100%", textAlign: "center" }}>
-                <thead>
-                  <tr>
-                    <th>Period / Day</th>
-                    {daysOfWeek.map(day => <th key={day}>{day}</th>)}
-                  </tr>
-                </thead>
-                <tbody>
-                  {periods.map(period => (
-                    <tr key={period}>
-                      <td style={{ fontWeight: "bold" }}>{period}</td>
-                      {daysOfWeek.map(day => {
-                        const cell = gridData[day]?.[period] || {
-                          subjectId: "",
-                          teacherId: "",
-                          timetableId: null,
-                          availableSubjects: [],
-                          availableTeachers: [],
-                        };
-                        return (
-                          <td key={day} style={{ border: "1px solid #999", padding: "5px" }}>
-                            <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-                              {/* Subject Dropdown */}
-                              <select
-                                value={cell.subjectId}
-                                onChange={e =>
-                                  handleChangeCell(day, period, "subjectId", e.target.value)
-                                }
-                              >
-                                <option value="">Select Subject</option>
-                                {cell.availableSubjects.map(s => (
-                                  <option key={s.subjectId} value={s.subjectId}>{s.name}</option>
-                                ))}
-                              </select>
-
-                              {/* Teacher Dropdown */}
-                              <select
-                                value={cell.teacherId}
-                                onChange={e =>
-                                  handleChangeCell(day, period, "teacherId", e.target.value)
-                                }
-                              >
-                                <option value="">Select Teacher</option>
-                                {cell.availableTeachers.map(t => (
-                                  <option key={t.userId} value={t.userId}>{t.name}</option>
-                                ))}
-                              </select>
-
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteCell(day, period)}
-                                style={{
-                                  backgroundColor: "#f44336",
-                                  color: "white",
-                                  border: "none",
-                                  padding: "3px",
-                                  borderRadius: "3px",
-                                  cursor: "pointer",
-                                }}
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              <button onClick={handleSave} style={{ marginTop: "20px", padding: "10px 20px" }}>
-                Save Timetable
-              </button>
-            </div>
-          )}
+        {/* Select Class */}
+        <div style={{ marginBottom: "20px" }}>
+          <select
+            className="modern-input"
+            style={{ width: 'auto' }}
+            value={selectedClass?.classId || ""}
+            onChange={e =>
+              setSelectedClass(classrooms.find(c => c.classId === Number(e.target.value)))
+            }
+          >
+            <option value="">Select Class & Section</option>
+            {classrooms.map(c => (
+              <option key={c.classId} value={c.classId}>
+                {c.name} {c.section ? `- ${c.section}` : ""}
+              </option>
+            ))}
+          </select>
         </div>
+
+        {/* Timetable Grid */}
+        {selectedClass && (
+          <div style={{ overflowX: "auto" }}>
+            <table className="tt-table" style={{ width: "100%", textAlign: "center" }}>
+              <thead>
+                <tr>
+                  <th>Period / Day</th>
+                  {daysOfWeek.map(day => <th key={day}>{day}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {periods.map(period => (
+                  <tr key={period}>
+                    <td style={{ fontWeight: "bold" }}>{period}</td>
+                    {daysOfWeek.map(day => {
+                      const cell = gridData[day]?.[period] || {
+                        subjectId: "",
+                        teacherId: "",
+                        timetableId: null,
+                        availableSubjects: [],
+                        availableTeachers: [],
+                      };
+                      return (
+                        <td key={day} style={{ border: "1px solid var(--border-color)", padding: "12px" }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                            {/* Subject Dropdown */}
+                            <select
+                              className="modern-input"
+                              style={{ fontSize: '13px', padding: '6px' }}
+                              value={cell.subjectId}
+                              onChange={e =>
+                                handleChangeCell(day, period, "subjectId", e.target.value)
+                              }
+                            >
+                              <option value="">Subject</option>
+                              {cell.availableSubjects.map(s => (
+                                <option key={s.subjectId} value={s.subjectId}>{s.name}</option>
+                              ))}
+                            </select>
+
+                            {/* Teacher Dropdown */}
+                            <select
+                              className="modern-input"
+                              style={{ fontSize: '13px', padding: '6px' }}
+                              value={cell.teacherId}
+                              onChange={e =>
+                                handleChangeCell(day, period, "teacherId", e.target.value)
+                              }
+                            >
+                              <option value="">Teacher</option>
+                              {cell.availableTeachers.map(t => (
+                                <option key={t.userId} value={t.userId}>{t.name}</option>
+                              ))}
+                            </select>
+
+                            <button
+                              type="button"
+                              className="modern-btn btn-outline"
+                              onClick={() => handleDeleteCell(day, period)}
+                              style={{
+                                padding: "4px",
+                                fontSize: '11px',
+                                color: '#ef4444',
+                                borderColor: '#fecaca'
+                              }}
+                            >
+                              Clear
+                            </button>
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <button className="modern-btn btn-primary" onClick={handleSave} style={{ marginTop: "20px" }}>
+              Save Timetable
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

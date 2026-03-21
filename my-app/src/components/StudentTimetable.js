@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Sidebar from "./Sidebar";
-import Navbar from "./Navbar";
+
 import { getDecodedToken } from "../utils/authHelper";
 import {
   getAllTimetables,
@@ -65,109 +64,101 @@ const StudentTimetable = () => {
   };
 
   return (
-    <div style={{ display: "flex" }}>
-      <Sidebar />
+    <div className="container">
+      {/* Inject SAME UI CSS used in Teacher Dashboard */}
+      <style>{`
+        .container {
+          max-width: 1100px;
+          margin: auto;
+        }
 
-      <div style={{ marginLeft: 260, padding: 20, width: "100%" }}>
-        <Navbar />
+        .card {
+          background: white;
+          padding: 18px;
+          border-radius: 12px;
+          box-shadow: 0 8px 22px rgba(18,25,40,0.06);
+          margin-bottom: 20px;
+        }
 
-        {/* Inject SAME UI CSS used in Teacher Dashboard */}
-        <style>{`
-          .container {
-            max-width: 1100px;
-            margin: auto;
-          }
+        .tt-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 10px;
+          min-width: 760px;
+          background: white;
+          border-radius: 12px;
+          overflow: hidden;
+        }
 
-          .card {
-            background: white;
-            padding: 18px;
-            border-radius: 12px;
-            box-shadow: 0 8px 22px rgba(18,25,40,0.06);
-            margin-bottom: 20px;
-          }
+        .tt-table th {
+          padding: 14px;
+          background: #eefcee;
+          border-bottom: 2px solid #d7f5d2;
+          text-align: center;
+          font-weight: 700;
+        }
 
-          .tt-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            min-width: 760px;
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-          }
+        .tt-table td {
+          padding: 14px;
+          border-bottom: 1px solid #f1f4f9;
+          text-align: center;
+          font-weight: 600;
+        }
 
-          .tt-table th {
-            padding: 14px;
-            background: #eefcee;
-            border-bottom: 2px solid #d7f5d2;
-            text-align: center;
-            font-weight: 700;
-          }
+        .day-col {
+          background: #dfffe0;
+          font-weight: 700 !important;
+        }
 
-          .tt-table td {
-            padding: 14px;
-            border-bottom: 1px solid #f1f4f9;
-            text-align: center;
-            font-weight: 600;
-          }
+        .period-col {
+          font-weight: 700;
+        }
+      `}</style>
 
-          .day-col {
-            background: #dfffe0;
-            font-weight: 700 !important;
-          }
+      <h2 style={{ marginBottom: 20 }}>🕒 My Timetable</h2>
 
-          .period-col {
-            font-weight: 700;
-          }
-        `}</style>
+      {loading && <div className="card">Loading timetable...</div>}
 
-        <div className="container">
-          <h2 style={{ marginBottom: 20 }}>🕒 My Timetable</h2>
+      {!loading && (
+        <div className="card" style={{ overflowX: "auto" }}>
+          <table className="tt-table">
+            <thead>
+              <tr>
+                <th className="period-col">Day</th>
+                {Array.from({ length: MAX_PERIODS }, (_, i) => (
+                  <th key={i}>Period {i + 1}</th>
+                ))}
+              </tr>
+            </thead>
 
-          {loading && <div className="card">Loading timetable...</div>}
+            <tbody>
+              {DAY_KEYS.map((dayKey) => (
+                <tr key={dayKey}>
+                  <td className="day-col">{FULL_DAY_MAP[dayKey]}</td>
 
-          {!loading && (
-            <div className="card" style={{ overflowX: "auto" }}>
-              <table className="tt-table">
-                <thead>
-                  <tr>
-                    <th className="period-col">Day</th>
-                    {Array.from({ length: MAX_PERIODS }, (_, i) => (
-                      <th key={i}>Period {i + 1}</th>
-                    ))}
-                  </tr>
-                </thead>
+                  {Array.from({ length: MAX_PERIODS }, (_, p) => p + 1).map(
+                    (period) => {
+                      const slot = timetable.find(
+                        (t) =>
+                          t.dayOfWeek
+                            .toUpperCase()
+                            .startsWith(dayKey) &&
+                          Number(t.periodNumber) === period
+                      );
 
-                <tbody>
-                  {DAY_KEYS.map((dayKey) => (
-                    <tr key={dayKey}>
-                      <td className="day-col">{FULL_DAY_MAP[dayKey]}</td>
-
-                      {Array.from({ length: MAX_PERIODS }, (_, p) => p + 1).map(
-                        (period) => {
-                          const slot = timetable.find(
-                            (t) =>
-                              t.dayOfWeek
-                                .toUpperCase()
-                                .startsWith(dayKey) &&
-                              Number(t.periodNumber) === period
-                          );
-
-                          return (
-                            <td key={period}>
-                              {slot ? getSubjectName(slot.subjectId) : "-"}
-                            </td>
-                          );
-                        }
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                      return (
+                        <td key={period}>
+                          {slot ? getSubjectName(slot.subjectId) : "-"}
+                        </td>
+                      );
+                    }
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </div>
+      )}
     </div>
   );
 };

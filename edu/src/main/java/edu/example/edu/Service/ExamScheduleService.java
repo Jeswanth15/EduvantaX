@@ -10,6 +10,7 @@ import edu.example.edu.DTO.ExamScheduleDTO;
 import edu.example.edu.Entity.Classroom;
 import edu.example.edu.Entity.ExamSchedule;
 import edu.example.edu.Entity.Subject;
+import edu.example.edu.Repository.ClassSubjectRepository;
 import edu.example.edu.Repository.ClassroomRepository;
 import edu.example.edu.Repository.ExamScheduleRepository;
 import edu.example.edu.Repository.SubjectRepository;
@@ -25,6 +26,9 @@ public class ExamScheduleService {
 
     @Autowired
     private SubjectRepository subjectRepository;
+
+    @Autowired
+    private ClassSubjectRepository classSubjectRepository;
 
     // ➕ Create or Update Exam Schedule
     public ExamScheduleDTO saveExamSchedule(ExamScheduleDTO dto) {
@@ -80,6 +84,12 @@ public class ExamScheduleService {
             dto.setStartTime(schedule.getStartTime());
             dto.setEndTime(schedule.getEndTime());
             dto.setRoomNo(schedule.getRoomNo());
+
+            // Set classSubjectId
+            classSubjectRepository.findByClassroomAndSubject(schedule.getClassroom(), schedule.getSubject())
+                .stream().findFirst()
+                .ifPresent(cs -> dto.setClassSubjectId(cs.getId()));
+
             return dto;
     }
 }

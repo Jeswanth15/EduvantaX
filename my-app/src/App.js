@@ -32,6 +32,8 @@ import StudentAssignmentsPage from "./components/StudentAssignmentsPage";
 import StudentSubmissionPage from "./components/StudentSubmissionPage";
 import AttendanceStudent from "./components/AttendanceStudent";
 import Substitution from "./components/Substitution";
+import Practice from "./components/Practice";
+import PracticeHistory from "./components/PracticeHistory";
 
 import Layout from "./components/Layout";
 
@@ -371,6 +373,33 @@ function App() {
           element={
             <PrivateRoute roles={["SCHOOLADMIN"]}>
               <Layout><Substitution /></Layout>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/student/substitutions"
+          element={
+            <PrivateRoute roles={["STUDENT"]}>
+              <Layout><Substitution /></Layout>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/student/practice"
+          element={
+            <PrivateRoute roles={["STUDENT"]}>
+              <Layout><Practice /></Layout>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/student/practice-history"
+          element={
+            <PrivateRoute roles={["STUDENT"]}>
+              <Layout><PracticeHistory /></Layout>
             </PrivateRoute>
           }
         />

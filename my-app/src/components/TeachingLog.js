@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Sidebar from "./Sidebar";
-import Navbar from "./Navbar";
+
 import { getDecodedToken } from "../utils/authHelper";
 import {
   getAllClassSubjects,
@@ -84,91 +83,84 @@ const TeachingLog = () => {
   };
 
   return (
-    <div className="page-layout">
-      <Sidebar />
-      <div className="content-area">
-        <Navbar />
+    <div className="teaching-log-page">
+      <div className="content-wrapper">
+        <h2 className="page-title">📘 Teaching Logs</h2>
 
-        <div className="content-wrapper">
-          <h2 className="page-title">📘 Teaching Logs</h2>
+        {/* CLASS-SUBJECT SELECT */}
+        <div className="card">
+          <h3>Select Class & Subject</h3>
 
-          {/* CLASS-SUBJECT SELECT */}
-          <div className="card">
-            <h3>Select Class & Subject</h3>
-
-            {classSubjects.length === 0 ? (
-              <p className="empty-text">No class-subjects assigned.</p>
-            ) : (
-              <div className="chip-scroll">
-                {classSubjects.map((cs) => (
-                  <button
-                    key={cs.id}
-                    className={`chip ${selectedId === cs.id ? "chip-active" : ""}`}
-                    onClick={() => handleSelect(cs.id)}
-                  >
-                    {cs.classroomName || cs.classroom?.name} —{" "}
-                    {cs.subjectName || cs.subject?.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* ADD LOG */}
-          {selectedId && (
-            <div className="card">
-              <h3>Add Teaching Log</h3>
-              <form className="form-grid" onSubmit={handleSubmit}>
-                <textarea
-                  placeholder="Enter topic taught..."
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  required
-                />
-                <button type="submit" className="btn-primary">
-                  Save Log
+          {classSubjects.length === 0 ? (
+            <p className="empty-text">No class-subjects assigned.</p>
+          ) : (
+            <div className="chip-scroll">
+              {classSubjects.map((cs) => (
+                <button
+                  key={cs.id}
+                  className={`chip ${selectedId === cs.id ? "chip-active" : ""}`}
+                  onClick={() => handleSelect(cs.id)}
+                >
+                  {cs.classroomName || cs.classroom?.name} —{" "}
+                  {cs.subjectName || cs.subject?.name}
                 </button>
-              </form>
+              ))}
             </div>
-          )}
-
-          {/* EXISTING LOGS */}
-          {logs.length > 0 && (
-            <div className="card">
-              <h3>Existing Logs</h3>
-
-              <div className="log-list">
-                {logs.map((log) => (
-                  <div key={log.id} className="log-card">
-                    <div>
-                      <strong className="log-title">{log.topicTaught}</strong>
-                      <div className="log-meta">
-                        Teacher: {log.teacher?.name || "N/A"} |
-                        {" " + new Date(log.taughtAt).toLocaleString()}
-                      </div>
-                    </div>
-
-                    {["ADMIN", "PRINCIPAL", "SCHOOLADMIN"].includes(userRole) && (
-                      <button className="delete-btn" onClick={() => handleDelete(log.id)}>
-                        🗑
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {selectedId && logs.length === 0 && (
-            <p className="empty-text">No logs yet for this class-subject.</p>
           )}
         </div>
+
+        {/* ADD LOG */}
+        {selectedId && (
+          <div className="card">
+            <h3>Add Teaching Log</h3>
+            <form className="form-grid" onSubmit={handleSubmit}>
+              <textarea
+                placeholder="Enter topic taught..."
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                required
+              />
+              <button type="submit" className="btn-primary">
+                Save Log
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* EXISTING LOGS */}
+        {logs.length > 0 && (
+          <div className="card">
+            <h3>Existing Logs</h3>
+
+            <div className="log-list">
+              {logs.map((log) => (
+                <div key={log.id} className="log-card">
+                  <div>
+                    <strong className="log-title">{log.topicTaught}</strong>
+                    <div className="log-meta">
+                      Teacher: {log.teacher?.name || "N/A"} |
+                      {" " + new Date(log.taughtAt).toLocaleString()}
+                    </div>
+                  </div>
+
+                  {["ADMIN", "PRINCIPAL", "SCHOOLADMIN"].includes(userRole) && (
+                    <button className="delete-btn" onClick={() => handleDelete(log.id)}>
+                      🗑
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {selectedId && logs.length === 0 && (
+          <p className="empty-text">No logs yet for this class-subject.</p>
+        )}
       </div>
 
       {/* ---------------- CSS ---------------- */}
       <style>{`
-        .page-layout { display: flex; }
-        .content-area { flex: 1; background:#f3f5f9; min-height:100vh; }
         .content-wrapper { padding:25px; max-width:900px; margin:auto; }
 
         .page-title {
@@ -184,6 +176,7 @@ const TeachingLog = () => {
           padding:20px;
           border-radius:12px;
           box-shadow:0 3px 10px rgba(0,0,0,.1);
+          border: 1px solid var(--border-color);
           margin-bottom:25px;
         }
 
@@ -201,6 +194,10 @@ const TeachingLog = () => {
           border:none;
           cursor:pointer;
           white-space:nowrap;
+          transition: all 0.2s;
+        }
+        .chip:hover {
+          background: #d1d5db;
         }
         .chip-active {
           background:#0a4275;
@@ -215,6 +212,7 @@ const TeachingLog = () => {
           border-radius:6px;
           border:1px solid #ccc;
           resize:none;
+          font-family: inherit;
         }
 
         .btn-primary {
@@ -225,6 +223,10 @@ const TeachingLog = () => {
           border-radius:6px;
           cursor:pointer;
           font-weight:600;
+          transition: opacity 0.2s;
+        }
+        .btn-primary:hover {
+          opacity: 0.9;
         }
 
         .log-list { display:grid; gap:12px; }
@@ -236,6 +238,7 @@ const TeachingLog = () => {
           display:flex;
           justify-content:space-between;
           align-items:flex-start;
+          border: 1px solid #edf2f7;
         }
 
         .log-title { font-size:16px; font-weight:600; }

@@ -8,6 +8,7 @@ import {
   getClassroomById,
   getCalendarBySchool,
 } from "../utils/api";
+import { useNavigate } from "react-router-dom";
 import { FaBullhorn, FaCalendarAlt, FaTable, FaClock, FaRocket, FaUserGraduate, FaBuilding, FaBookOpen } from "react-icons/fa";
 
 const StudentPage = () => {
@@ -16,6 +17,7 @@ const StudentPage = () => {
   const schoolId = decoded?.schoolId;
   const classroomId = decoded?.classroomId;
   const userName = decoded?.sub || "Student";
+  const navigate = useNavigate();
 
   // Right Panel States
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
@@ -256,11 +258,11 @@ const StudentPage = () => {
           <div className="premium-card" style={styles.shortcutsCard}>
             <h3 style={styles.cardHeader}><FaBookOpen size={14} /> Quick Links</h3>
             <div style={styles.shortcutGrid}>
-              <button style={styles.shortcutItem} onClick={() => window.location.href = '/student-assignments'}>
+              <button style={styles.shortcutItem} onClick={() => navigate('/student/assignments')}>
                 Assignments
               </button>
-              <button style={styles.shortcutItem} onClick={() => window.location.href = '/student-submissions'}>
-                Submissions
+              <button style={styles.shortcutItem} onClick={() => navigate('/student/marks')}>
+                My Grades
               </button>
             </div>
           </div>

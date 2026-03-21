@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from "react";
-import Sidebar from "./Sidebar";
-import Navbar from "./Navbar";
 import { getDecodedToken } from "../utils/authHelper";
 
 import {
@@ -181,20 +179,18 @@ const AssignSubjectPage = () => {
   };
 
   return (
-    <div style={{ display: "flex" }}>
-      <Sidebar />
+    <div className="assign-subject-page-wrapper">
+      <div style={container}>
+        <h2 style={title}>Assign Subjects</h2>
 
-      <div style={{ flex: 1 }}> 
-        <Navbar />
-
-        <div style={container}>
-          <h2 style={title}>Assign Subjects</h2>
-
-          {/* FORM */}
-          <div style={formBox}>
-            <div style={formGrid}>
+        {/* FORM */}
+        <div className="premium-card" style={{ padding: '24px', marginBottom: '32px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', alignItems: 'end', marginBottom: '20px' }}>
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', display: 'block' }}>Classroom</label>
               <select
-                style={input}
+                className="modern-input"
+                style={{ margin: 0 }}
                 value={selectedClass}
                 onChange={(e) => setSelectedClass(e.target.value)}
               >
@@ -205,9 +201,13 @@ const AssignSubjectPage = () => {
                   </option>
                 ))}
               </select>
+            </div>
 
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', display: 'block' }}>Subject</label>
               <select
-                style={input}
+                className="modern-input"
+                style={{ margin: 0 }}
                 value={selectedSubject}
                 onChange={(e) => setSelectedSubject(e.target.value)}
               >
@@ -218,9 +218,13 @@ const AssignSubjectPage = () => {
                   </option>
                 ))}
               </select>
+            </div>
 
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', display: 'block' }}>Teacher</label>
               <select
-                style={input}
+                className="modern-input"
+                style={{ margin: 0 }}
                 value={selectedTeacher}
                 onChange={(e) => setSelectedTeacher(e.target.value)}
               >
@@ -232,49 +236,54 @@ const AssignSubjectPage = () => {
                 ))}
               </select>
             </div>
-
-            <button onClick={handleAssign} style={assignButton}>
-              Assign
-            </button>
           </div>
 
-          {/* TABLE */}
-          <div style={cardTable}>
-            <h3 style={{ marginBottom: "15px" }}>Assigned Subjects</h3>
-            <table style={table}>
-              <thead>
-                <tr>
-                  <th style={th}>ID</th>
-                  <th style={th}>Class</th>
-                  <th style={th}>Subject</th>
-                  <th style={th}>Teacher</th>
-                  <th style={th}>Actions</th>
+          <button className="modern-btn btn-primary" onClick={handleAssign} style={{ width: 'auto' }}>
+            Assign Subject to Class
+          </button>
+        </div>
+
+        {/* TABLE */}
+        <div className="premium-card" style={{ padding: '0', overflow: 'hidden' }}>
+          <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)' }}>
+            <h3 style={{ margin: 0 }}>Assigned Subjects</h3>
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead style={{ background: 'rgba(30, 136, 229, 0.05)' }}>
+              <tr>
+                <th style={{ padding: '16px', textAlign: 'left' }}>Class</th>
+                <th style={{ padding: '16px', textAlign: 'left' }}>Subject</th>
+                <th style={{ padding: '16px', textAlign: 'left' }}>Teacher</th>
+                <th style={{ padding: '16px', textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {assignments.map((a) => (
+                <tr key={a.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                  <td style={{ padding: '16px', fontWeight: '600' }}>
+                    {a.classroomName} - {a.classroomSection}
+                  </td>
+                  <td style={{ padding: '16px' }}>{a.subjectName}</td>
+                  <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{a.teacherName || "N/A"}</td>
+                  <td style={{ padding: '16px', textAlign: 'right' }}>
+                    <button
+                      className="modern-btn btn-outline"
+                      style={{ color: '#ef4444', borderColor: '#fecaca', padding: '6px 12px' }}
+                      onClick={() => handleDelete(a.id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-
-              <tbody>
-                {assignments.map((a) => (
-                  <tr key={a.id}>
-                    <td style={td}>{a.id}</td>
-                    <td style={td}>
-                      {a.classroomName} - {a.classroomSection}
-                    </td>
-                    <td style={td}>{a.subjectName}</td>
-                    <td style={td}>{a.teacherName || "N/A"}</td>
-                    <td style={td}>
-                      <button
-                        style={deleteBtn}
-                        onClick={() => handleDelete(a.id)}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-
-            </table>
-          </div>
+              ))}
+              {assignments.length === 0 && (
+                <tr>
+                  <td colSpan="4" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic' }}>No subjects assigned yet.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

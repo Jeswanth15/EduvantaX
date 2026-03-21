@@ -12,6 +12,7 @@ public class ExamScheduleDTO {
     private Long subjectId;
     private String subjectName;
     private String classroomName;
+    private Long classSubjectId;
 
     private LocalDate examDate;
     private LocalTime startTime;

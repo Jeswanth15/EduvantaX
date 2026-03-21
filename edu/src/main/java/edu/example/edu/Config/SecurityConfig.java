@@ -40,7 +40,9 @@ public class SecurityConfig {
                                 "/api/syllabus/files/**",
                                 "/api/assignments/files/**",
                                 "/api/schools",
-                                "/api/schools/**")
+                                "/api/schools/**",
+                                "/api/questions/**",
+                                "/api/practice/**")
                         .permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+chromadb
+google-generativeai
+pypdf
+python-pptx
+python-multipart

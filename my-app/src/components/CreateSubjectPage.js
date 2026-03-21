@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from "react";
-import Sidebar from "./Sidebar";
-import Navbar from "./Navbar";
 import { getAllSubjects, createSubject, deleteSubject } from "../utils/api";
 import { getDecodedToken } from "../utils/authHelper";
 
@@ -51,13 +49,8 @@ const CreateSubjectPage = () => {
   };
 
   return (
-    <div className="page-container">
-      <Sidebar />
-
-      <div className="content-area">
-        <Navbar />
-
-        <div className="content-wrapper">
+    <div className="create-subject-page-wrapper">
+      <div className="content-wrapper">
           <h2 className="page-title">Create Subject</h2>
 
           {/* FORM CARD */}
@@ -108,7 +101,6 @@ const CreateSubjectPage = () => {
             </div>
           )}
         </div>
-      </div>
 
       {/* ----- CSS BELOW ----- */}
       <style>{`

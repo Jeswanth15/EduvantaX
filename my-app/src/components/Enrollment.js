@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from "react";
-import Sidebar from "./Sidebar";
-import Navbar from "./Navbar";
 import {
   getStudentsBySchool,
   getAllClassrooms,
@@ -81,12 +79,8 @@ const Enrollment = () => {
   };
 
   return (
-    <div className="page-container">
-      <Sidebar />
-      <div className="content-area">
-        <Navbar />
-
-        <div className="content-wrapper">
+    <div className="enrollment-page-wrapper">
+      <div className="content-wrapper">
           <h2 className="page-title">Manage Enrollments</h2>
 
           {/* ENROLL FORM */}
@@ -176,7 +170,6 @@ const Enrollment = () => {
             </table>
           </div>
         </div>
-      </div>
 
       {/* --- CSS --- */}
       <style>{`

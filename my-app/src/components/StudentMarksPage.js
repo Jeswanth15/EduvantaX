@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Sidebar from "./Sidebar";
-import Navbar from "./Navbar";
+
 import { getDecodedToken } from "../utils/authHelper";
 import { getMarksByStudent } from "../utils/api";
 
@@ -56,60 +55,57 @@ const StudentMarksPage = () => {
   const sortedMarks = sortData(marks);
 
   return (
-    <div style={{ display: "flex" }}>
-      <Sidebar />
+    <div className="marks-container">
+      <h2 style={{ marginBottom: 20 }}>📊 My Marks</h2>
 
-      <div style={{ marginLeft: 260, padding: 20, width: "100%" }}>
-        <Navbar />
+      {/* SORT DROPDOWN */}
+      <select
+        value={sortBy}
+        onChange={(e) => setSortBy(e.target.value)}
+        className="modern-input"
+        style={{ padding: 8, marginBottom: 15, width: 'auto' }}
+      >
+        <option value="DATE_DESC">Latest First</option>
+        <option value="DATE_ASC">Oldest First</option>
 
-        <h2>📊 My Marks</h2>
+        <option value="SUBJECT_ASC">Subject A → Z</option>
+        <option value="SUBJECT_DESC">Subject Z → A</option>
 
-        {/* SORT DROPDOWN */}
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          style={{ padding: 8, marginBottom: 15 }}
-        >
-          <option value="DATE_DESC">Latest First</option>
-          <option value="DATE_ASC">Oldest First</option>
+        <option value="MARKS_DESC">Marks High → Low</option>
+        <option value="MARKS_ASC">Marks Low → High</option>
+      </select>
 
-          <option value="SUBJECT_ASC">Subject A → Z</option>
-          <option value="SUBJECT_DESC">Subject Z → A</option>
+      {loading && <p>Loading marks...</p>}
 
-          <option value="MARKS_DESC">Marks High → Low</option>
-          <option value="MARKS_ASC">Marks Low → High</option>
-        </select>
+      {!loading && sortedMarks.length === 0 && <p>No marks found.</p>}
 
-        {loading && <p>Loading marks...</p>}
-
-        {!loading && sortedMarks.length === 0 && <p>No marks found.</p>}
-
-        {!loading && sortedMarks.length > 0 && (
+      {!loading && sortedMarks.length > 0 && (
+        <div className="premium-card" style={{ padding: '0', overflow: 'hidden' }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ background: "#e5f7ff" }}>
-                <th>Subject</th>
-                <th>Exam Type</th>
-                <th>Marks Obtained</th>
-                <th>Total Marks</th>
-                <th>Date</th>
+              <tr style={{ background: "rgba(30, 136, 229, 0.05)", borderBottom: '1px solid var(--border-color)' }}>
+                <th style={{ padding: '16px', textAlign: 'left' }}>Subject</th>
+                <th style={{ padding: '16px', textAlign: 'left' }}>Exam Type</th>
+                <th style={{ padding: '16px', textAlign: 'center' }}>Marks Obtained</th>
+                <th style={{ padding: '16px', textAlign: 'center' }}>Total Marks</th>
+                <th style={{ padding: '16px', textAlign: 'right' }}>Date</th>
               </tr>
             </thead>
 
             <tbody>
               {sortedMarks.map((m) => (
-                <tr key={m.marksId}>
-                  <td>{m.subjectName}</td>
-                  <td>{m.examType}</td>
-                  <td>{m.marksObtained}</td>
-                  <td>{m.totalMarks}</td>
-                  <td>{m.examDate}</td>
+                <tr key={m.marksId} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                  <td style={{ padding: '16px' }}>{m.subjectName}</td>
+                  <td style={{ padding: '16px' }}>{m.examType}</td>
+                  <td style={{ padding: '16px', textAlign: 'center', fontWeight: '700' }}>{m.marksObtained}</td>
+                  <td style={{ padding: '16px', textAlign: 'center' }}>{m.totalMarks}</td>
+                  <td style={{ padding: '16px', textAlign: 'right', color: 'var(--text-muted)' }}>{m.examDate}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -141,12 +141,8 @@ const ExamSchedulePage = () => {
   };
 
   return (
-    <div className="exam-flex">
-      <Sidebar />
-      <div className="exam-main">
-        <Navbar />
-
-        <div className="exam-wrapper">
+    <div className="exam-schedule-view">
+      <div className="exam-wrapper">
           <h2 className="exam-title">📘 Exam Schedule</h2>
 
           <div className="exam-layout">
@@ -289,7 +285,6 @@ const ExamSchedulePage = () => {
             </main>
           </div>
         </div>
-      </div>
 
       {/* STYLES */}
       <style>{`

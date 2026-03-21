@@ -6,6 +6,7 @@ import {
   createOrUpdateSyllabus,
   deleteSyllabus,
 } from "../utils/api";
+import { useNavigate } from "react-router-dom";
 import { getDecodedToken } from "../utils/authHelper";
 import {
   FaFileUpload, FaBook, FaTrash, FaExternalLinkAlt, FaClock,
@@ -22,6 +23,14 @@ const Syllabus = () => {
   const [selectedId, setSelectedId] = useState(null);
   const [syllabusList, setSyllabusList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [expandedModule, setExpandedModule] = useState(null);
+  const [historyData, setHistoryData] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [studyPlan, setStudyPlan] = useState(null);
+  const [loadingPlan, setLoadingPlan] = useState(false);
+  const [selectedModule, setSelectedModule] = useState("General");
+  const [selectedDays, setSelectedDays] = useState(7);
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -59,6 +68,7 @@ const Syllabus = () => {
       const res = await getSyllabusByClassSubject(id);
       setSyllabusList(res.data || []);
       setSelectedId(id);
+      setStudyPlan(null); // Reset study plan when switching class
     } catch (err) {
       console.error("Error fetching syllabus:", err);
     }
@@ -108,6 +118,42 @@ const Syllabus = () => {
     acc[module].push(current);
     return acc;
   }, {});
+
+  const handleStartTest = async (moduleText, classSubjectId, moduleName) => {
+      // Gather all text from the files. We can pass the file contents to the backend.
+      // Or better yet, tell the practice component the context
+      navigate('/student/practice', { state: { classSubjectId, moduleName, files: groupedSyllabus[moduleName] } });
+  };
+
+  const handleViewMarks = async (classSubjectId, moduleName) => {
+      try {
+          const res = await fetch(`http://localhost:8080/api/practice/module/${classSubjectId}/${moduleName}?userId=${userId}`, {
+              headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          });
+          const data = await res.json();
+          setHistoryData(data);
+          setShowHistory(true);
+      } catch (err) {
+          console.error(err);
+      }
+  };
+
+  const handleGenerateStudyPlan = async () => {
+      setLoadingPlan(true);
+      try {
+          const moduleParam = selectedModule !== "General" ? `&moduleName=${encodeURIComponent(selectedModule)}` : "";
+          const res = await fetch(`http://localhost:8080/api/practice/study-plan/${userId}/${selectedId}?days=${selectedDays}${moduleParam}`, {
+              headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          });
+          const text = await res.text();
+          setStudyPlan(text);
+      } catch (err) {
+          console.error(err);
+          setStudyPlan("Failed to generate plan securely. Try again later.");
+      } finally {
+          setLoadingPlan(false);
+      }
+  };
 
   const getFileIcon = (url) => {
     if (!url) return <FaLink />;
@@ -224,46 +270,115 @@ const Syllabus = () => {
           </div>
         )}
 
+        {/* AI STUDY PLAN (STUDENT ONLY) */}
+        {selectedId && role === "STUDENT" && (
+            <div className="premium-card" style={{ marginBottom: "24px", background: "linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%)", borderColor: "#bae6fd" }}>
+               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
+                  <h3 style={{ margin: 0, color: "var(--primary-color)", display: 'flex', alignItems: 'center', gap: '8px' }}>
+                     ✨ Personalized AI Study Plan
+                  </h3>
+                  
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Module</label>
+                      <select 
+                        className="modern-input" 
+                        style={{ padding: '6px 12px', height: '36px', minWidth: '140px' }}
+                        value={selectedModule}
+                        onChange={(e) => setSelectedModule(e.target.value)}
+                      >
+                        <option value="General">All Modules</option>
+                        {Object.keys(groupedSyllabus).map(m => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Duration</label>
+                      <select 
+                        className="modern-input" 
+                        style={{ padding: '6px 12px', height: '36px', minWidth: '80px' }}
+                        value={selectedDays}
+                        onChange={(e) => setSelectedDays(parseInt(e.target.value))}
+                      >
+                        <option value={3}>3 Days</option>
+                        <option value={5}>5 Days</option>
+                        <option value={7}>7 Days</option>
+                        <option value={10}>10 Days</option>
+                      </select>
+                    </div>
+
+                    <button className="modern-btn btn-primary" onClick={handleGenerateStudyPlan} disabled={loadingPlan} style={{ alignSelf: 'flex-end', height: '36px' }}>
+                        {loadingPlan ? "Generating..." : "Generate Plan"}
+                    </button>
+                  </div>
+               </div>
+               {studyPlan && (
+                  <div style={{ padding: "16px", backgroundColor: "white", borderRadius: "8px", border: "1px solid #bae6fd", fontSize: '15px', color: '#334155', lineHeight: '1.6' }}>
+                      {studyPlan}
+                  </div>
+               )}
+            </div>
+        )}
+
         {/* MATERIALS LIST */}
         <div style={styles.materialsList}>
           {Object.keys(groupedSyllabus).length > 0 ? (
             Object.keys(groupedSyllabus).map((module) => (
-              <div key={module} style={styles.moduleSection}>
-                <div style={styles.moduleHeader}>
-                  <FaFolderOpen />
-                  <span>{module}</span>
+              <div key={module} className="premium-card" style={styles.moduleSection}>
+                <div style={styles.moduleHeader} onClick={() => role === "STUDENT" ? setExpandedModule(expandedModule === module ? null : module) : null}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <FaFolderOpen size={24} style={{ color: "var(--primary-color)" }} />
+                    <span style={{ fontSize: '20px' }}>{module}</span>
+                  </div>
+                  {role === "STUDENT" && (
+                    <div style={styles.studentActionRow}>
+                      <button className="modern-btn btn-outline" onClick={(e) => { e.stopPropagation(); setExpandedModule(expandedModule === module ? null : module); }}>
+                         View Module
+                      </button>
+                      <button className="modern-btn btn-primary" onClick={(e) => { e.stopPropagation(); handleStartTest(groupedSyllabus[module].map(s => s.fileLink).join(','), selectedId, module); }}>
+                         Start Test
+                      </button>
+                      <button className="modern-btn btn-outline" onClick={(e) => { e.stopPropagation(); handleViewMarks(selectedId, module); }}>
+                         View Past Marks
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <div style={styles.itemsGrid}>
-                  {groupedSyllabus[module].map((s) => (
-                    <div key={s.syllabusId} className="premium-card" style={styles.itemCard}>
-                      <div style={styles.itemTag}>
-                        <div style={styles.fileIcon}>{getFileIcon(s.fileLink)}</div>
-                      </div>
-                      <div style={styles.itemContent}>
-                        <div style={styles.itemTop}>
-                          <h4 style={styles.itemTitle}>{s.title}</h4>
-                          {role !== "STUDENT" && (
-                            <button
-                              style={styles.deleteBtn}
-                              onClick={() => handleDelete(s.syllabusId)}
-                            >
-                              <FaTrash size={12} />
-                            </button>
-                          )}
+                {(role !== "STUDENT" || expandedModule === module) && (
+                  <div style={styles.itemsGrid}>
+                    {groupedSyllabus[module].map((s) => (
+                      <div key={s.syllabusId} style={styles.itemCard}>
+                        <div style={styles.itemTag}>
+                          <div style={styles.fileIcon}>{getFileIcon(s.fileLink)}</div>
                         </div>
-                        <p style={styles.itemDesc}>{s.description}</p>
-                        <div style={styles.itemFooter}>
-                          <a href={getFullFileUrl(s.fileLink)} target="_blank" rel="noreferrer" style={styles.downloadLink}>
-                            <FaExternalLinkAlt size={10} /> View Material
-                          </a>
-                          <div style={styles.itemDate}>
-                            <FaClock size={10} /> {new Date(s.uploadedAt).toLocaleDateString()}
+                        <div style={styles.itemContent}>
+                          <div style={styles.itemTop}>
+                            <h4 style={styles.itemTitle}>{s.title}</h4>
+                            {role !== "STUDENT" && (
+                              <button
+                                style={styles.deleteBtn}
+                                onClick={() => handleDelete(s.syllabusId)}
+                              >
+                                <FaTrash size={12} />
+                              </button>
+                            )}
+                          </div>
+                          <p style={styles.itemDesc}>{s.description}</p>
+                          <div style={styles.itemFooter}>
+                            <a href={getFullFileUrl(s.fileLink)} target="_blank" rel="noreferrer" style={styles.downloadLink}>
+                              <FaExternalLinkAlt size={10} /> Open File
+                            </a>
+                            <div style={styles.itemDate}>
+                              <FaClock size={10} /> {new Date(s.uploadedAt).toLocaleDateString()}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))
           ) : (
@@ -276,6 +391,28 @@ const Syllabus = () => {
           )}
         </div>
       </div>
+
+      {showHistory && (
+        <div style={styles.modalOverlay} onClick={() => setShowHistory(false)}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ marginTop: 0 }}>Past Marks</h3>
+            {historyData.length === 0 ? (
+              <p>No past attempts for this module.</p>
+            ) : (
+              <ul style={{ listStyle: "none", padding: 0 }}>
+                {historyData.map((h, i) => (
+                  <li key={i} style={{ padding: "10px", borderBottom: "1px solid #eee", display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Attempt {historyData.length - i}</span>
+                    <strong style={{ color: h.score < 50 ? 'red' : 'green' }}>{h.score}%</strong>
+                    <span style={{ fontSize: '12px', color: '#888' }}>{new Date(h.timestamp).toLocaleDateString()}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <button className="modern-btn btn-outline" style={{ marginTop: '20px', width: '100%' }} onClick={() => setShowHistory(false)}>Close</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -359,18 +496,23 @@ const styles = {
     alignItems: "center",
   },
   moduleSection: {
-    marginBottom: "32px",
+    marginBottom: "24px",
+    padding: "24px",
+    cursor: "pointer",
   },
   moduleHeader: {
     display: "flex",
+    justifyContent: "space-between",
     alignItems: "center",
-    gap: "10px",
-    fontSize: "16px",
     fontWeight: "700",
-    color: "var(--primary-color)",
+    color: "var(--text-primary)",
     marginBottom: "16px",
-    paddingBottom: "8px",
-    borderBottom: "2px solid rgba(30, 136, 229, 0.1)",
+    paddingBottom: "16px",
+    borderBottom: "1px solid rgba(0,0,0,0.05)",
+  },
+  studentActionRow: {
+    display: 'flex',
+    gap: '10px'
   },
   itemsGrid: {
     display: "grid",
@@ -465,6 +607,14 @@ const styles = {
     justifyContent: "center",
     minHeight: "60vh",
   },
+  modalOverlay: {
+    position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000
+  },
+  modalContent: {
+    backgroundColor: "#fff", padding: "24px", borderRadius: "12px", width: "400px", maxWidth: "90%",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.1)"
+  }
 };
 
 export default Syllabus;

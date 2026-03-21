@@ -120,93 +120,91 @@ const Substitution = () => {
     };
 
     return (
-        <div style={{ display: "flex" }}>
-            <Sidebar />
-            <div style={{ marginLeft: "250px", flex: 1 }}>
-                <Navbar />
-                <div style={{ padding: "20px" }}>
-                    <h2>Manage Daily Substitutions</h2>
+        <div className="substitution-page-wrapper">
+            <div style={{ padding: "20px" }}>
+                <h2>Manage Daily Substitutions</h2>
 
-                    <div style={styles.card}>
-                        <h3>Add New Substitution</h3>
+                <div className="premium-card" style={{ marginBottom: '24px', padding: '24px' }}>
+                    <h3 style={{ marginBottom: '20px' }}>Add New Substitution</h3>
+                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '20px' }}>
+                        <label style={{ fontWeight: '600' }}>Date: </label>
+                        <input type="date" className="modern-input" style={{ width: 'auto', margin: 0 }} value={selectedDate} onChange={handleDateChange} />
+                    </div>
+
+                    <div style={styles.formGrid}>
                         <div style={styles.formGroup}>
-                            <label>Date: </label>
-                            <input type="date" value={selectedDate} onChange={handleDateChange} />
+                            <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700' }}>Classroom</label>
+                            <select className="modern-input" value={selectedClassId} onChange={e => setSelectedClassId(e.target.value)}>
+                                <option value="">Select Class</option>
+                                {classrooms.map(c => (
+                                    <option key={c.classId} value={c.classId}>{c.name} {c.section}</option>
+                                ))}
+                            </select>
                         </div>
 
-                        <div style={styles.formGrid}>
-                            <div style={styles.formGroup}>
-                                <label>Classroom: </label>
-                                <select value={selectedClassId} onChange={e => setSelectedClassId(e.target.value)}>
-                                    <option value="">Select Class</option>
-                                    {classrooms.map(c => (
-                                        <option key={c.classId} value={c.classId}>{c.name} {c.section}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div style={styles.formGroup}>
-                                <label>Period: </label>
-                                <select value={selectedPeriod} onChange={e => setSelectedPeriod(e.target.value)}>
-                                    <option value="">Select Period</option>
-                                    {periods.map(p => <option key={p} value={p}>{p}</option>)}
-                                </select>
-                            </div>
-
-                            <button onClick={findFreeTeachersForPeriod} style={styles.btnAction}>Find Free Teachers</button>
+                        <div style={styles.formGroup}>
+                            <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700' }}>Period</label>
+                            <select className="modern-input" value={selectedPeriod} onChange={e => setSelectedPeriod(e.target.value)}>
+                                <option value="">Select Period</option>
+                                {periods.map(p => <option key={p} value={p}>{p}</option>)}
+                            </select>
                         </div>
 
-                        {freeTeachers.length > 0 && (
-                            <div style={styles.formGrid}>
-                                <div style={styles.formGroup}>
-                                    <label>Substitute Teacher: </label>
-                                    <select value={selectedSubstituteId} onChange={e => setSelectedSubstituteId(e.target.value)}>
-                                        <option value="">Select Teacher</option>
-                                        {freeTeachers.map(t => <option key={t.userId} value={t.userId}>{t.name}</option>)}
-                                    </select>
-                                </div>
-                                <div style={styles.formGroup}>
-                                    <label>Reason: </label>
-                                    <input type="text" value={reason} onChange={e => setReason(e.target.value)} placeholder="Reason (Optional)" />
-                                </div>
-                                <button onClick={handleAddSubstitution} style={styles.btnSuccess}>Assign Substitution</button>
-                            </div>
-                        )}
+                        <button className="modern-btn btn-outline" onClick={findFreeTeachersForPeriod} style={{ height: '42px' }}>Find Free Teachers</button>
                     </div>
 
-                    <div style={styles.card}>
-                        <h3>Active Substitutions for {selectedDate}</h3>
-                        <table style={styles.table}>
-                            <thead>
-                                <tr>
-                                    <th>Class</th>
-                                    <th>Period</th>
-                                    <th>Substitute</th>
-                                    <th>Reason</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {substitutions.map(s => {
-                                    const tt = timetables.find(t => t.timetableId === s.timetableId);
-                                    const clsName = classrooms.find(c => c.classId === tt?.classroomId)?.name || "N/A";
-                                    const teacherName = freeTeachers.find(t => t.userId === s.substituteTeacherId)?.name || "Teacher ID: " + s.substituteTeacherId;
-                                    return (
-                                        <tr key={s.substitutionId}>
-                                            <td>{clsName}</td>
-                                            <td>{tt?.periodNumber}</td>
-                                            <td>{teacherName}</td>
-                                            <td>{s.reason}</td>
-                                            <td>
-                                                <button onClick={() => handleDelete(s.substitutionId)} style={styles.btnDanger}>Remove</button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                                {substitutions.length === 0 && <tr><td colSpan="5">No substitutions found for this date</td></tr>}
-                            </tbody>
-                        </table>
+                    {freeTeachers.length > 0 && (
+                        <div style={{ ...styles.formGrid, borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+                            <div style={styles.formGroup}>
+                                <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700' }}>Substitute Teacher</label>
+                                <select className="modern-input" value={selectedSubstituteId} onChange={e => setSelectedSubstituteId(e.target.value)}>
+                                    <option value="">Select Teacher</option>
+                                    {freeTeachers.map(t => <option key={t.userId} value={t.userId}>{t.name}</option>)}
+                                </select>
+                            </div>
+                            <div style={styles.formGroup}>
+                                <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700' }}>Reason</label>
+                                <input type="text" className="modern-input" value={reason} onChange={e => setReason(e.target.value)} placeholder="Reason (Optional)" />
+                            </div>
+                            <button className="modern-btn btn-primary" onClick={handleAddSubstitution} style={{ height: '42px' }}>Assign Substitution</button>
+                        </div>
+                    )}
+                </div>
+
+                <div className="premium-card" style={{ padding: '0', overflow: 'hidden' }}>
+                    <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)' }}>
+                        <h3 style={{ margin: 0 }}>Active Substitutions for {selectedDate}</h3>
                     </div>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead style={{ background: 'rgba(30, 136, 229, 0.05)' }}>
+                            <tr>
+                                <th style={{ padding: '16px', textAlign: 'left' }}>Class</th>
+                                <th style={{ padding: '16px', textAlign: 'center' }}>Period</th>
+                                <th style={{ padding: '16px', textAlign: 'left' }}>Substitute</th>
+                                <th style={{ padding: '16px', textAlign: 'left' }}>Reason</th>
+                                <th style={{ padding: '16px', textAlign: 'right' }}>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {substitutions.map(s => {
+                                const tt = timetables.find(t => t.timetableId === s.timetableId);
+                                const clsName = classrooms.find(c => c.classId === tt?.classroomId)?.name || "N/A";
+                                const teacherName = freeTeachers.find(t => t.userId === s.substituteTeacherId)?.name || "Teacher ID: " + s.substituteTeacherId;
+                                return (
+                                    <tr key={s.substitutionId} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                        <td style={{ padding: '16px' }}>{clsName}</td>
+                                        <td style={{ padding: '16px', textAlign: 'center' }}>{tt?.periodNumber}</td>
+                                        <td style={{ padding: '16px' }}>{teacherName}</td>
+                                        <td style={{ padding: '16px' }}>{s.reason}</td>
+                                        <td style={{ padding: '16px', textAlign: 'right' }}>
+                                            <button className="modern-btn btn-outline" onClick={() => handleDelete(s.substitutionId)} style={{ color: '#ef4444', borderColor: '#fecaca', padding: '6px 12px' }}>Remove</button>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                            {substitutions.length === 0 && <tr><td colSpan="5" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic' }}>No substitutions found for this date</td></tr>}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
