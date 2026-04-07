@@ -26,3 +26,9 @@ replay_pid*
 chroma_db/
 edu/uploads/
 python_service/__pycache__/
+
+# Environments
+.env
+.venv
+venv/
+env/

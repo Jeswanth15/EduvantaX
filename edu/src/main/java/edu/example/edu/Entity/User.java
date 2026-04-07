@@ -1,6 +1,7 @@
 package edu.example.edu.Entity;
 
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,7 +26,7 @@ import lombok.NoArgsConstructor;
 public class User {
 
     public enum Role {
-        STUDENT, TEACHER, PRINCIPAL, SCHOOLADMIN, ADMIN
+        STUDENT, TEACHER, PRINCIPAL, SCHOOLADMIN, ADMIN, DRIVER
     }
 
     public enum ApprovalStatus {
@@ -55,23 +56,34 @@ public class User {
     @JoinColumn(name = "school_id", nullable = true)
     private School school;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "teacher")
     private List<ClassSubject> teachingSubjects;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "teacher")
     private List<Timetable> timetableEntries;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "originalTeacher")
     private List<Substitution> substitutionsAsOriginal;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "substituteTeacher")
     private List<Substitution> substitutionsAsSubstitute;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "student")
     private List<Enrollment> enrollments;
 
     @ManyToOne
     @JoinColumn(name = "classroom_id")
     private Classroom classroom;
+
+    @Column(name = "student_type")
+    private String studentType; // e.g., "DAY_SCHOLAR", "HOSTELLER"
+
+    @Column(name = "assigned_stop_id")
+    private Long assignedStopId; // only applicable for day scholars
 
 }

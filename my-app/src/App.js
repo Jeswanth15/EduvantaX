@@ -34,6 +34,11 @@ import AttendanceStudent from "./components/AttendanceStudent";
 import Substitution from "./components/Substitution";
 import Practice from "./components/Practice";
 import PracticeHistory from "./components/PracticeHistory";
+import AdminTransportPage from "./components/AdminTransportPage";
+import DriverPortal from "./components/DriverPortal";
+import StudentTransportPage from "./components/StudentTransportPage";
+import AdminStudentTransport from "./components/AdminStudentTransport";
+import StudentBusTracking from "./components/StudentBusTracking";
 
 import Layout from "./components/Layout";
 
@@ -83,6 +88,16 @@ function App() {
           element={
             <PrivateRoute roles={["TEACHER"]}>
               <Layout><TeacherDashboard /></Layout>
+            </PrivateRoute>
+          }
+        />
+
+        {/* ---------------- DRIVER ---------------- */}
+        <Route
+          path="/driver/portal"
+          element={
+            <PrivateRoute roles={["DRIVER"]}>
+              <Layout><DriverPortal /></Layout>
             </PrivateRoute>
           }
         />
@@ -232,6 +247,24 @@ function App() {
           }
         />
 
+        <Route
+          path="/student/transport"
+          element={
+            <PrivateRoute roles={["STUDENT"]}>
+              <Layout><StudentTransportPage /></Layout>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/student/bus-tracking"
+          element={
+            <PrivateRoute roles={["STUDENT"]}>
+              <Layout><StudentBusTracking /></Layout>
+            </PrivateRoute>
+          }
+        />
+
         {/* ---------------- SCHOOL ADMIN ---------------- */}
         <Route
           path="/schooladmin"
@@ -373,6 +406,24 @@ function App() {
           element={
             <PrivateRoute roles={["SCHOOLADMIN"]}>
               <Layout><Substitution /></Layout>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/schooladmin/transport"
+          element={
+            <PrivateRoute roles={["SCHOOLADMIN", "ADMIN"]}>
+              <Layout><AdminTransportPage /></Layout>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/schooladmin/student-transport"
+          element={
+            <PrivateRoute roles={["SCHOOLADMIN", "ADMIN"]}>
+              <Layout><AdminStudentTransport /></Layout>
             </PrivateRoute>
           }
         />

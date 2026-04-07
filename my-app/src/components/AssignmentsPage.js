@@ -121,7 +121,7 @@ const AssignmentsPage = () => {
         <p style={styles.subtitle}>Manage and track coursework tasks</p>
       </div>
 
-      <div style={styles.mainGrid}>
+      <div className="grid-side-main" style={{alignItems: "start"}}>
         {/* LEFT: FILTERS & CREATE */}
         <div style={styles.sideCol}>
           <div className="premium-card" style={styles.card}>
@@ -302,11 +302,9 @@ const styles = {
     color: "var(--text-muted)",
     fontSize: "14px",
   },
-  mainGrid: {
-    display: "grid",
-    gridTemplateColumns: "340px 1fr",
-    gap: "32px",
-    alignItems: "start",
+  subtitle: {
+    color: "var(--text-muted)",
+    fontSize: "14px",
   },
   sideCol: {
     position: "sticky",

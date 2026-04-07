@@ -24,6 +24,9 @@ export const getTeachersBySchool = (schoolId) =>
 export const getStudentsBySchool = (schoolId) =>
   axios.get(`${API_BASE}/api/users/students?schoolId=${schoolId}`, config());
 
+export const getDriversBySchool = (schoolId) =>
+  axios.get(`${API_BASE}/api/users/drivers?schoolId=${schoolId}`, config());
+
 export const getPendingUsersBySchool = (schoolId) =>
   axios.get(`${API_BASE}/api/users/pending/${schoolId}`, config());
 
@@ -293,3 +296,64 @@ export const getFreeTeachers = (date, periodNumber) =>
 
 export const deleteSubstitution = (id) =>
   axios.delete(`${API_BASE}/api/substitutions/${id}`, config());
+
+// ---------------- TRANSPORT (BUS TRACKING) ----------------
+export const approveDriver = (userId) =>
+  axios.post(`${API_BASE}/transport/admin/approve-driver/${userId}`, null, config());
+
+export const createBus = (busNumber, capacity) =>
+  axios.post(`${API_BASE}/transport/admin/create-bus?busNumber=${busNumber}&capacity=${capacity}`, null, config());
+
+export const getAllBuses = () =>
+  axios.get(`${API_BASE}/transport/admin/buses`, config());
+
+export const getAllRoutes = () =>
+  axios.get(`${API_BASE}/transport/admin/routes`, config());
+
+export const getAllDriversList = () =>
+  axios.get(`${API_BASE}/transport/admin/drivers-list`, config());
+
+export const createRoute = (data) =>
+  axios.post(`${API_BASE}/transport/admin/create-route`, data, config());
+
+export const addStop = (data) =>
+  axios.post(`${API_BASE}/transport/admin/add-stop`, data, config());
+
+export const assignDriver = (data) =>
+  axios.post(`${API_BASE}/transport/admin/assign-driver`, data, config());
+
+export const assignBusToRoute = (busId, routeId) =>
+  axios.post(`${API_BASE}/transport/admin/assign-bus/${busId}/route/${routeId}`, null, config());
+
+export const deleteBus = (id) =>
+  axios.delete(`${API_BASE}/transport/admin/bus/${id}`, config());
+
+export const deleteRoute = (id) =>
+  axios.delete(`${API_BASE}/transport/admin/route/${id}`, config());
+
+export const startTrip = (userId) =>
+  axios.post(`${API_BASE}/transport/driver/start-trip/${userId}`, null, config());
+
+export const endTrip = (userId) =>
+  axios.post(`${API_BASE}/transport/driver/end-trip/${userId}`, null, config());
+
+export const updateLocation = (userId, locationData) =>
+  axios.post(`${API_BASE}/transport/driver/location/update/${userId}`, locationData, config());
+
+export const getDriverTripInfo = (userId) =>
+  axios.get(`${API_BASE}/transport/driver/trip-info/${userId}`, config());
+
+export const getBusStatus = (studentId) =>
+  axios.get(`${API_BASE}/transport/student/${studentId}/bus-status`, config());
+
+export const updateStudentType = (studentId, type) =>
+  axios.post(`${API_BASE}/transport/admin/update-student-type?studentId=${studentId}&type=${type}`, null, config());
+
+export const assignStudentStop = (studentId, stopId) =>
+  axios.post(`${API_BASE}/transport/admin/assign-student-stop?studentId=${studentId}&stopId=${stopId}`, null, config());
+
+export const getAllStudents = (schoolId) =>
+  axios.get(`${API_BASE}/transport/admin/all-students/${schoolId}`, config());
+
+export const getTripSummary = () =>
+  axios.get(`${API_BASE}/transport/admin/trip-summary`, config());

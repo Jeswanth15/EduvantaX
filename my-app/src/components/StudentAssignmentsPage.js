@@ -68,7 +68,7 @@ const StudentAssignmentsPage = () => {
           <p>You're all caught up! Check back later for new tasks.</p>
         </div>
       ) : (
-        <div style={styles.assignmentGrid}>
+        <div className="grid-auto-fill">
           {assignments.map((a) => (
             <div
               key={a.assignmentId}
@@ -123,10 +123,9 @@ const styles = {
     color: "var(--text-muted)",
     fontSize: "14px",
   },
-  assignmentGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(100%, 1fr))",
-    gap: "20px",
+  subtitle: {
+    color: "var(--text-muted)",
+    fontSize: "14px",
   },
   card: {
     padding: "24px",

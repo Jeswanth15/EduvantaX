@@ -9,7 +9,8 @@ import {
   getCalendarBySchool,
 } from "../utils/api";
 import { useNavigate } from "react-router-dom";
-import { FaBullhorn, FaCalendarAlt, FaTable, FaClock, FaRocket, FaUserGraduate, FaBuilding, FaBookOpen } from "react-icons/fa";
+import { FaBullhorn, FaCalendarAlt, FaTable, FaClock, FaRocket, FaUserGraduate, FaBuilding, FaBookOpen, FaBus } from "react-icons/fa";
+import LiveBusMap from "./LiveBusMap";
 
 const StudentPage = () => {
   const decoded = getDecodedToken();
@@ -179,7 +180,7 @@ const StudentPage = () => {
             Welcome back, {userName}!
           </div>
         </div>
-        <div style={styles.headerActions}>
+        <div style={{...styles.headerActions, flexWrap: "wrap"}}>
           <button className="modern-btn btn-outline" onClick={() => openRightPanel("TIMETABLE")}>
             <FaTable /> Timetable
           </button>
@@ -189,8 +190,19 @@ const StudentPage = () => {
         </div>
       </div>
 
-      <div style={styles.contentGrid}>
+      <div className="grid-main-side">
         <div style={styles.mainCol}>
+          {/* Live Bus Tracking Section */}
+          <div className="premium-card" style={{ marginBottom: "24px", padding: "24px" }}>
+            <div style={styles.sectionHeader}>
+              <h3 style={styles.sectionTitle}>
+                <FaBus style={{ marginRight: 10, color: "var(--primary-color)" }} /> 
+                Live Bus Tracking
+              </h3>
+            </div>
+            <LiveBusMap userId={decoded?.userId} />
+          </div>
+
           <div className="premium-card" style={styles.feedSection}>
             <div style={styles.sectionHeader}>
               <h3 style={styles.sectionTitle}><FaBullhorn style={{ marginRight: 10, color: "var(--primary-color)" }} /> Announcements</h3>
@@ -398,10 +410,9 @@ const styles = {
     display: "flex",
     gap: "12px",
   },
-  contentGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 340px",
-    gap: "32px",
+  headerActions: {
+    display: "flex",
+    gap: "12px",
   },
   sectionHeader: {
     display: "flex",

@@ -113,6 +113,8 @@ const Sidebar = () => {
               <Link to="/schooladmin/exams" style={linkStyle("/schooladmin/exams")} onClick={closeSidebar}>{t("exam_schedules")}</Link>
               <Link to="/schooladmin/marks" style={linkStyle("/schooladmin/marks")} onClick={closeSidebar}>{t("marks_register")}</Link>
               <Link to="/schooladmin/attendance" style={linkStyle("/schooladmin/attendance")} onClick={closeSidebar}>{t("attendance")}</Link>
+              <Link to="/schooladmin/transport" style={linkStyle("/schooladmin/transport")} onClick={closeSidebar}>Transport Mgmt</Link>
+              <Link to="/schooladmin/student-transport" style={linkStyle("/schooladmin/student-transport")} onClick={closeSidebar}>Student Transport</Link>
             </>
           )}
 
@@ -129,6 +131,14 @@ const Sidebar = () => {
             </>
           )}
 
+          {/* DRIVER */}
+          {userRole === "DRIVER" && (
+            <>
+              <h2 style={styles.sectionTitle}>Transport</h2>
+              <Link to="/driver/portal" style={linkStyle("/driver/portal")} onClick={closeSidebar}>Driver Portal</Link>
+            </>
+          )}
+
           {/* STUDENT */}
           {userRole === "STUDENT" && (
             <>
@@ -139,6 +149,7 @@ const Sidebar = () => {
               <Link to="/student/assignments" style={linkStyle("/student/assignments")} onClick={closeSidebar}>{t("my_assignments")}</Link>
               <Link to="/student/attendance" style={linkStyle("/student/attendance")} onClick={closeSidebar}>{t("my_attendance")}</Link>
               <Link to="/student/syllabus" style={linkStyle("/student/syllabus")} onClick={closeSidebar}>{t("view_syllabus")}</Link>
+              <Link to="/student/bus-tracking" style={linkStyle("/student/bus-tracking")} onClick={closeSidebar}>Bus Tracking</Link>
             </>
           )}
         </div>

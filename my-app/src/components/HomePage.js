@@ -19,11 +19,13 @@ const HomePage = () => {
 
     const timer = setTimeout(() => {
       setRedirecting(true);
-      switch (role) {
+      const normalizedRole = role?.toUpperCase();
+      switch (normalizedRole) {
         case "ADMIN":
           navigate("/admin");
           break;
         case "SCHOOLADMIN":
+        case "PRINCIPAL": // Same dashboard for now or similar
           navigate("/schooladmin");
           break;
         case "TEACHER":
@@ -32,10 +34,14 @@ const HomePage = () => {
         case "STUDENT":
           navigate("/student");
           break;
+        case "DRIVER":
+          navigate("/driver/portal");
+          break;
         default:
+          console.warn("Unknown role or role missing from switch:", normalizedRole);
           navigate("/login");
       }
-    }, 1500); // Slight delay for a smoother transition feel
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, [role, navigate]);

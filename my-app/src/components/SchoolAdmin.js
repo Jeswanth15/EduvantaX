@@ -120,7 +120,7 @@ const SchoolAdmin = () => {
       </div>
 
       {/* SUMMARY CARDS */}
-      <div style={styles.summaryGrid}>
+      <div className="grid-cols-2" style={{marginBottom: "36px"}}>
         <div className="premium-card" style={styles.summaryCard}>
           <div style={styles.cardHeader}>
             <FaUsers style={{ color: "var(--accent-color)" }} />
@@ -256,11 +256,16 @@ const styles = {
     textTransform: "uppercase",
     letterSpacing: "0.5px",
   },
-  summaryGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(2, 1fr)",
-    gap: "24px",
-    marginBottom: "36px",
+  schoolTag: {
+    color: "var(--accent-color)",
+    fontSize: "14px",
+    fontWeight: "600",
+    margin: 0,
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
   },
   summaryCard: {
     padding: "24px",

@@ -293,9 +293,11 @@ public class UserController {
             throw new RuntimeException("Invalid credentials");
         }
 
-        // ❌ BLOCK PENDING OR REJECTED USERS
-        if (user.getApprovalStatus() != User.ApprovalStatus.APPROVED) {
-            throw new RuntimeException("Your account is " + user.getApprovalStatus() + ". Contact school admin.");
+        // ❌ BLOCK PENDING OR REJECTED USERS (Skip for Admins)
+        if (user.getRole() != User.Role.ADMIN && user.getRole() != User.Role.SCHOOLADMIN && user.getRole() != User.Role.PRINCIPAL) {
+            if (user.getApprovalStatus() != User.ApprovalStatus.APPROVED) {
+                throw new RuntimeException("Your account is " + user.getApprovalStatus() + ". Contact school admin.");
+            }
         }
 
         Long schoolId = user.getSchool() != null ? user.getSchool().getSchoolId() : null;
@@ -330,7 +332,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','SCHOOLADMIN','PRINCIPAL','TEACHER','STUDENT')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SCHOOLADMIN','PRINCIPAL','TEACHER','STUDENT','DRIVER')")
     public UserDTO getUserById(@PathVariable Long id) {
         return userService.getUserById(id);
     }
@@ -409,5 +411,11 @@ public class UserController {
     @PreAuthorize("hasAnyAuthority('ADMIN','SCHOOLADMIN','PRINCIPAL')")
     public List<UserDTO> getTeachersBySchool(@RequestParam Long schoolId) {
         return userService.getUsersBySchoolAndRole(schoolId, User.Role.TEACHER);
+    }
+
+    @GetMapping("/drivers")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SCHOOLADMIN','PRINCIPAL')")
+    public List<UserDTO> getDriversBySchool(@RequestParam Long schoolId) {
+        return userService.getUsersBySchoolAndRole(schoolId, User.Role.DRIVER);
     }
 }

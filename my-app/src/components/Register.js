@@ -89,6 +89,7 @@ const Register = () => {
             <option value="TEACHER">Teacher</option>
             <option value="PRINCIPAL">Principal</option>
             <option value="SCHOOLADMIN">School Admin</option>
+            <option value="DRIVER">Driver</option>
           </select>
 
           {/* SCHOOL DROPDOWN */}

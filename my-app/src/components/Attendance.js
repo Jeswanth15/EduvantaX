@@ -268,7 +268,7 @@ const Attendance = ({ isTeacher = false }) => {
         <p style={styles.subtitle}>Track and record student presence across classes</p>
       </div>
 
-      <div style={styles.mainGrid}>
+      <div className="grid-side-main" style={{alignItems: "start"}}>
         <div style={styles.filterCol}>
           <div className="premium-card" style={styles.filterCard}>
             <h3 style={styles.sectionTitle}>
@@ -519,11 +519,9 @@ const styles = {
     color: "var(--text-muted)",
     fontSize: "14px",
   },
-  mainGrid: {
-    display: "grid",
-    gridTemplateColumns: "320px 1fr",
-    gap: "32px",
-    alignItems: "start",
+  subtitle: {
+    color: "var(--text-muted)",
+    fontSize: "14px",
   },
   filterCol: {
     display: "flex",

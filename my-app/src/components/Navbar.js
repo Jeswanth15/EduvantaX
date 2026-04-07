@@ -13,7 +13,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav style={styles.navbar} className="glass-panel">
+    <nav style={styles.navbar}>
       <h2 style={styles.logo}>EduPortal</h2>
       <div style={styles.profileSection}>
         <Link to="/profile" style={styles.profileLink}>
@@ -32,8 +32,15 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "0 20px",
+    padding: "0 24px",
     width: "100%",
+    height: "64px",
+    backgroundColor: "var(--surface-color)",
+    borderBottom: "1px solid var(--border-color)",
+    boxShadow: "var(--shadow-sm)",
+    position: "sticky",
+    top: 0,
+    zIndex: 100,
   },
   logo: {
     margin: 0,

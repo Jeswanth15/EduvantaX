@@ -42,7 +42,8 @@ public class SecurityConfig {
                                 "/api/schools",
                                 "/api/schools/**",
                                 "/api/questions/**",
-                                "/api/practice/**")
+                                "/api/practice/**",
+                                "/error")
                         .permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

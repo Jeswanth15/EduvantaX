@@ -2,6 +2,7 @@ package edu.example.edu.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.List;
 
@@ -24,9 +25,11 @@ public class School {
 
     private String contactInfo;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "school", cascade = CascadeType.ALL)
     private List<User> users;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "school", cascade = CascadeType.ALL)
     private List<Classroom> classrooms;
 }
