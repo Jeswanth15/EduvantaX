@@ -269,7 +269,7 @@ function App() {
         <Route
           path="/schooladmin"
           element={
-            <PrivateRoute roles={["SCHOOLADMIN"]}>
+            <PrivateRoute roles={["SCHOOLADMIN", "PRINCIPAL"]}>
               <Layout><SchoolAdmin /></Layout>
             </PrivateRoute>
           }
@@ -278,7 +278,7 @@ function App() {
         <Route
           path="/schooladmin/pending-users"
           element={
-            <PrivateRoute roles={["SCHOOLADMIN"]}>
+            <PrivateRoute roles={["SCHOOLADMIN", "PRINCIPAL"]}>
               <Layout><PendingUsers /></Layout>
             </PrivateRoute>
           }
@@ -287,7 +287,7 @@ function App() {
         <Route
           path="/schooladmin/classrooms"
           element={
-            <PrivateRoute roles={["SCHOOLADMIN"]}>
+            <PrivateRoute roles={["SCHOOLADMIN", "PRINCIPAL"]}>
               <Layout><ClassroomPage /></Layout>
             </PrivateRoute>
           }
@@ -296,7 +296,7 @@ function App() {
         <Route
           path="/schooladmin/subjects"
           element={
-            <PrivateRoute roles={["SCHOOLADMIN"]}>
+            <PrivateRoute roles={["SCHOOLADMIN", "PRINCIPAL"]}>
               <Layout><CreateSubjectPage /></Layout>
             </PrivateRoute>
           }
@@ -305,7 +305,7 @@ function App() {
         <Route
           path="/schooladmin/assign-subject"
           element={
-            <PrivateRoute roles={["SCHOOLADMIN"]}>
+            <PrivateRoute roles={["SCHOOLADMIN", "PRINCIPAL"]}>
               <Layout><AssignSubjectPage /></Layout>
             </PrivateRoute>
           }
@@ -314,7 +314,7 @@ function App() {
         <Route
           path="/schooladmin/enrollments"
           element={
-            <PrivateRoute roles={["SCHOOLADMIN"]}>
+            <PrivateRoute roles={["SCHOOLADMIN", "PRINCIPAL"]}>
               <Layout><Enrollment /></Layout>
             </PrivateRoute>
           }
@@ -323,7 +323,7 @@ function App() {
         <Route
           path="/schooladmin/timetables"
           element={
-            <PrivateRoute roles={["SCHOOLADMIN"]}>
+            <PrivateRoute roles={["SCHOOLADMIN", "PRINCIPAL"]}>
               <Layout><Timetable /></Layout>
             </PrivateRoute>
           }
@@ -332,7 +332,7 @@ function App() {
         <Route
           path="/schooladmin/calendar"
           element={
-            <PrivateRoute roles={["SCHOOLADMIN"]}>
+            <PrivateRoute roles={["SCHOOLADMIN", "PRINCIPAL"]}>
               <Layout><Calendar /></Layout>
             </PrivateRoute>
           }
@@ -341,7 +341,7 @@ function App() {
         <Route
           path="/schooladmin/syllabus"
           element={
-            <PrivateRoute roles={["SCHOOLADMIN"]}>
+            <PrivateRoute roles={["SCHOOLADMIN", "PRINCIPAL"]}>
               <Layout><Syllabus /></Layout>
             </PrivateRoute>
           }
@@ -350,7 +350,7 @@ function App() {
         <Route
           path="/schooladmin/teaching-logs"
           element={
-            <PrivateRoute roles={["SCHOOLADMIN"]}>
+            <PrivateRoute roles={["SCHOOLADMIN", "PRINCIPAL"]}>
               <Layout><TeachingLog /></Layout>
             </PrivateRoute>
           }
@@ -359,7 +359,7 @@ function App() {
         <Route
           path="/schooladmin/attendance"
           element={
-            <PrivateRoute roles={["SCHOOLADMIN"]}>
+            <PrivateRoute roles={["SCHOOLADMIN", "PRINCIPAL"]}>
               <Layout><Attendance /></Layout>
             </PrivateRoute>
           }
@@ -368,7 +368,7 @@ function App() {
         <Route
           path="/schooladmin/exams"
           element={
-            <PrivateRoute roles={["SCHOOLADMIN"]}>
+            <PrivateRoute roles={["SCHOOLADMIN", "PRINCIPAL"]}>
               <Layout><ExamSchedulePage /></Layout>
             </PrivateRoute>
           }
@@ -377,7 +377,7 @@ function App() {
         <Route
           path="/schooladmin/assignments"
           element={
-            <PrivateRoute roles={["SCHOOLADMIN"]}>
+            <PrivateRoute roles={["SCHOOLADMIN", "PRINCIPAL"]}>
               <Layout><AssignmentsPage /></Layout>
             </PrivateRoute>
           }
@@ -386,7 +386,7 @@ function App() {
         <Route
           path="/schooladmin/assignments/:assignmentId/submissions"
           element={
-            <PrivateRoute roles={["SCHOOLADMIN"]}>
+            <PrivateRoute roles={["SCHOOLADMIN", "PRINCIPAL"]}>
               <Layout><SubmissionPage /></Layout>
             </PrivateRoute>
           }
@@ -395,7 +395,7 @@ function App() {
         <Route
           path="/schooladmin/marks"
           element={
-            <PrivateRoute roles={["SCHOOLADMIN"]}>
+            <PrivateRoute roles={["SCHOOLADMIN", "PRINCIPAL"]}>
               <Layout><MarksEntryPage /></Layout>
             </PrivateRoute>
           }
@@ -404,7 +404,7 @@ function App() {
         <Route
           path="/schooladmin/substitutions"
           element={
-            <PrivateRoute roles={["SCHOOLADMIN"]}>
+            <PrivateRoute roles={["SCHOOLADMIN", "PRINCIPAL"]}>
               <Layout><Substitution /></Layout>
             </PrivateRoute>
           }

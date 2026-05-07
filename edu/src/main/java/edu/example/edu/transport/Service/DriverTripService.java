@@ -58,7 +58,7 @@ public class DriverTripService {
         
         if (bus != null && bus.getRoute() != null) {
             dto.setRoute(bus.getRoute());
-            dto.setStops(busStopRepository.findByRouteIdOrderByStopOrderAsc(bus.getRoute().getId()));
+            dto.setStops(busStopRepository.findByRouteIdAndIsApprovedTrueOrderByStopOrderAsc(bus.getRoute().getId()));
             
             Optional<Trip> activeTrip = tripRepository.findByBusIdAndStatus(bus.getId(), Trip.TripStatus.IN_PROGRESS);
             activeTrip.ifPresent(dto::setActiveTrip);
@@ -140,7 +140,7 @@ public class DriverTripService {
     private void updateStopProgression(Long busId, Trip trip, double lat, double lon) {
         if (trip.getBus().getRoute() == null) return;
         
-        List<BusStop> stops = busStopRepository.findByRouteIdOrderByStopOrderAsc(trip.getBus().getRoute().getId());
+        List<BusStop> stops = busStopRepository.findByRouteIdAndIsApprovedTrueOrderByStopOrderAsc(trip.getBus().getRoute().getId());
         if (stops.isEmpty()) return;
         
         // Find next stop to check if reached
@@ -175,5 +175,27 @@ public class DriverTripService {
                 Math.sin(dLon / 2) * Math.sin(dLon / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
+    }
+
+    public BusStop proposeStop(Long userId, String stopName, double lat, double lng) {
+        Driver driver = driverRepository.findByUser_UserId(userId)
+                .orElseThrow(() -> new RuntimeException("Driver profile not found"));
+        Bus bus = driver.getAssignedBus();
+        if (bus == null || bus.getRoute() == null) {
+            throw new RuntimeException("No active route assigned. Cannot propose stop.");
+        }
+        
+        List<BusStop> allStops = busStopRepository.findByRouteIdAndIsApprovedTrueOrderByStopOrderAsc(bus.getRoute().getId());
+        int newOrder = allStops.isEmpty() ? 1 : allStops.get(allStops.size() - 1).getStopOrder() + 1;
+        
+        BusStop newStop = new BusStop();
+        newStop.setStopName(stopName);
+        newStop.setLatitude(lat);
+        newStop.setLongitude(lng);
+        newStop.setStopOrder(newOrder);
+        newStop.setRoute(bus.getRoute());
+        newStop.setApproved(false);
+        
+        return busStopRepository.save(newStop);
     }
 }

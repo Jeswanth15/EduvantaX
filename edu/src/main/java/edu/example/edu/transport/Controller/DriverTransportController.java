@@ -35,4 +35,13 @@ public class DriverTransportController {
     public ResponseEntity<DriverTripInfoDTO> getDriverTripInfo(@PathVariable Long userId) {
         return ResponseEntity.ok(driverTripService.getDriverTripInfo(userId));
     }
+
+    @PostMapping("/propose-stop/{userId}")
+    public ResponseEntity<edu.example.edu.transport.Entity.BusStop> proposeStop(
+            @PathVariable Long userId,
+            @RequestParam String stopName,
+            @RequestParam Double lat,
+            @RequestParam Double lng) {
+        return ResponseEntity.ok(driverTripService.proposeStop(userId, stopName, lat, lng));
+    }
 }

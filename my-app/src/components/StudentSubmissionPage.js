@@ -1,15 +1,7 @@
-// src/components/StudentSubmissionPage.js
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import {
-  getStudentSubmissions,
-  createSubmission,
-} from "../utils/api";
+import { getStudentSubmissions, createSubmission } from "../utils/api";
 import { getDecodedToken } from "../utils/authHelper";
-import {
-  FaUpload, FaFileAlt, FaCheckCircle, FaCalendarAlt,
-  FaExclamationCircle, FaDownload, FaHistory, FaUser
-} from "react-icons/fa";
 
 const StudentSubmissionPage = () => {
   const { assignmentId } = useParams();
@@ -21,318 +13,111 @@ const StudentSubmissionPage = () => {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
-  // Load existing submission
   useEffect(() => {
     const loadSubmission = async () => {
       try {
         setLoading(true);
         const res = await getStudentSubmissions(assignmentId, studentId);
         setSubmission(res.data.length > 0 ? res.data[0] : null);
-      } catch (err) {
-        console.error("Load submission error", err);
-      } finally {
-        setLoading(false);
-      }
+      } catch (err) { console.error(err); } finally { setLoading(false); }
     };
-
     loadSubmission();
   }, [assignmentId, studentId]);
 
-  // Upload submission
   const handleUpload = async () => {
-    if (!file) {
-      alert("Select a file first!");
-      return;
-    }
-
+    if (!file) return alert("Select a file first!");
     try {
       setUploading(true);
       const formData = new FormData();
       formData.append("file", file);
       formData.append("assignmentId", assignmentId);
       formData.append("studentId", studentId);
-
       const res = await createSubmission(formData);
-      alert("Submitted successfully!");
       setSubmission(res.data);
-    } catch (err) {
-      console.error(err);
-      alert("Upload failed");
-    } finally {
-      setUploading(false);
-    }
+    } catch { alert("Upload failed"); } finally { setUploading(false); }
   };
 
-  const getFullFileUrl = (url) => {
-    if (!url) return "#";
-    if (url.startsWith("http")) return url;
-    return `http://localhost:8080${url}`;
-  };
+  const getFullFileUrl = (url) => url ? (url.startsWith("http") ? url : `http://localhost:8080${url}`) : "#";
 
-  if (loading) return <div style={styles.loading}>Curating your submission...</div>;
+  if (loading) return <div style={{textAlign:"center", padding:100, color:"var(--text-tertiary)"}}>Fetching workspace...</div>;
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>My Submission</h1>
-        <p style={styles.subtitle}>Track your work and academic feedback</p>
+    <div style={{ maxWidth: 1000, margin: "0 auto", paddingBottom: 40 }}>
+      {/* Header */}
+      <div style={{ marginBottom: 32 }}>
+        <h1 style={{ fontSize:32, fontWeight:900, color:"var(--text-primary)", letterSpacing:"-0.03em", margin:"0 0 6px", fontFamily:"'Outfit', sans-serif" }}>Submission Workspace</h1>
+        <p style={{ margin:0, fontSize:14, color:"var(--text-secondary)", fontWeight:500 }}>Upload files and track your evaluator's feedback.</p>
       </div>
 
-      <div style={styles.mainGrid}>
-        {/* STATUS & FEEDBACK CARD */}
-        {submission && (
-          <div style={styles.statusCol}>
-            <div className="premium-card" style={styles.resultCard}>
-              <h3 style={styles.sectionTitle}><FaCheckCircle /> Academic Result</h3>
-              <div style={styles.gradeBox}>
-                <label style={styles.label}>Awarded Grade</label>
-                <div style={styles.gradeValue}>{submission.grade || "PENDING"}</div>
-              </div>
-              <div style={styles.feedbackBox}>
-                <label style={styles.label}>Tutor Feedback</label>
-                <p style={styles.feedbackText}>{submission.feedback || "Awaiting review from your subject teacher."}</p>
-              </div>
-            </div>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:32, alignItems:"start" }}>
+        
+        {/* Left Col - Submitter */}
+        <div style={{ display:"flex", flexDirection:"column", gap:24 }}>
+          <div style={{ background:"var(--surface-1)", borderRadius:24, padding:32, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)" }}>
+             <h3 style={{ fontSize:15, fontWeight:800, color:"var(--text-primary)", margin:"0 0 20px" }}>{submission ? "Update Turn-In" : "Upload Assessment"}</h3>
+             
+             <div style={{ background:file?"rgba(16,185,129,0.05)":"var(--surface-2)", border:file?"2px dashed #10b981":"2px dashed var(--border-medium)", borderRadius:16, padding:40, textAlign:"center", transition:"all 0.2s" }}>
+                <input type="file" id="submit-file" style={{display:"none"}} onChange={e=>setFile(e.target.files[0])} />
+                <label htmlFor="submit-file" style={{ cursor:"pointer", display:"flex", flexDirection:"column", alignItems:"center", gap:12 }}>
+                   <div style={{ width:48, height:48, borderRadius:"50%", background:file?"#10b981":"var(--surface-3)", color:file?"white":"var(--text-muted)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20 }}>{file ? "✓" : "+"}</div>
+                   <div style={{ fontSize:14, fontWeight:700, color:file?"#10b981":"var(--text-secondary)" }}>{file ? file.name : "Click to select local file"}</div>
+                   {!file && <div style={{ fontSize:12, color:"var(--text-tertiary)" }}>PDF, DOCX, ZIP</div>}
+                </label>
+             </div>
 
-            <div className="premium-card" style={styles.fileCard}>
-              <h3 style={styles.sectionTitle}><FaHistory /> Submission Details</h3>
-              <div style={styles.detailRow}>
-                <FaUser style={styles.icon} />
-                <div>
-                  <label style={styles.label}>Submitted By</label>
-                  <p style={styles.value}>{submission.studentName || "You"}</p>
-                </div>
-              </div>
-              <div style={styles.detailRow}>
-                <FaCalendarAlt style={styles.icon} />
-                <div>
-                  <label style={styles.label}>Date Submitted</label>
-                  <p style={styles.value}>{new Date(submission.submissionDate).toLocaleString()}</p>
-                </div>
-              </div>
-              <div style={styles.detailRow}>
-                <FaFileAlt style={styles.icon} />
-                <div>
-                  <label style={styles.label}>Attached Resource</label>
-                  <a href={getFullFileUrl(submission.fileLink)} target="_blank" rel="noreferrer" style={styles.downloadLink}>
-                    <FaDownload size={12} /> View/Download File
-                  </a>
-                </div>
-              </div>
-            </div>
+             <button onClick={handleUpload} disabled={uploading||!file} style={{ width:"100%", marginTop:24, padding:14, borderRadius:12, background:submission?"transparent":"var(--primary-color)", color:submission?"var(--primary-color)":"white", border:submission?"1px solid var(--primary-color)":"none", fontWeight:800, cursor:uploading||!file?"not-allowed":"pointer", opacity:uploading||!file?0.5:1 }}>
+               {uploading ? "Processing..." : submission ? "Overwrite File" : "Seal & Turn In"}
+             </button>
           </div>
-        )}
-
-        {/* UPLOAD / RE-UPLOAD CARD */}
-        <div style={styles.uploadCol}>
-          <div className="premium-card" style={styles.uploadCard}>
-            <h3 style={styles.sectionTitle}>
-              <FaUpload size={14} /> {submission ? "Update Submission" : "Submit Your Work"}
-            </h3>
-            <p style={styles.uploadDesc}>
-              {submission
-                ? "You can update your submission by uploading a new file. Note: This will replace your previous attempt."
-                : "Please upload your assignment file here. Accepted formats: PDF, DOCX, ZIP."}
-            </p>
-
-            <div style={styles.fileDropZone}>
-              <input
-                type="file"
-                id="student-submission-file"
-                style={{ display: "none" }}
-                onChange={(e) => setFile(e.target.files[0])}
-              />
-              <label htmlFor="student-submission-file" style={styles.dropZoneLabel}>
-                {file ? (
-                  <div style={styles.selectedFile}>
-                    <FaFileAlt size={32} color="var(--primary-color)" />
-                    <span>{file.name}</span>
-                  </div>
-                ) : (
-                  <>
-                    <FaUpload size={32} style={{ opacity: 0.3 }} />
-                    <span>{submission ? "Select new file to replace" : "Click to browse or drag file here"}</span>
-                  </>
-                )}
-              </label>
-            </div>
-
-            <button
-              className={`modern-btn ${submission ? "btn-outline" : "btn-primary"}`}
-              onClick={handleUpload}
-              disabled={uploading || !file}
-              style={styles.submitBtn}
-            >
-              {uploading ? "Processing..." : submission ? "Update Submission" : "Post Submission"}
-            </button>
-          </div>
-
-          {!submission && (
-            <div className="premium-card" style={styles.emptyHint}>
-              <FaExclamationCircle size={24} style={{ opacity: 0.2, marginBottom: "12px" }} />
-              <p>No submission has been recorded for this task yet.</p>
-            </div>
-          )}
         </div>
-      </div>
-    </div >
-  );
-};
 
-const styles = {
-  container: {
-    maxWidth: "1000px",
-    margin: "0 auto",
-  },
-  header: {
-    marginBottom: "32px",
-  },
-  title: {
-    fontSize: "28px",
-    fontWeight: "700",
-    marginBottom: "4px",
-  },
-  subtitle: {
-    color: "var(--text-muted)",
-    fontSize: "14px",
-  },
-  mainGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "32px",
-    alignItems: "start",
-  },
-  statusCol: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "24px",
-  },
-  sectionTitle: {
-    fontSize: "16px",
-    fontWeight: "700",
-    marginBottom: "20px",
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    color: "var(--text-primary)",
-    borderBottom: "1px solid var(--border-color)",
-    paddingBottom: "12px",
-  },
-  resultCard: {
-    padding: "24px",
-  },
-  gradeBox: {
-    marginBottom: "20px",
-  },
-  gradeValue: {
-    fontSize: "32px",
-    fontWeight: "800",
-    color: "var(--primary-color)",
-    letterSpacing: "-0.5px",
-  },
-  feedbackBox: {
-    backgroundColor: "var(--background-color)",
-    padding: "16px",
-    borderRadius: "8px",
-    borderLeft: "4px solid var(--accent-color)",
-  },
-  feedbackText: {
-    fontSize: "14px",
-    color: "var(--text-secondary)",
-    lineHeight: "1.6",
-    margin: 0,
-  },
-  fileCard: {
-    padding: "24px",
-  },
-  detailRow: {
-    display: "flex",
-    gap: "16px",
-    marginBottom: "16px",
-  },
-  icon: {
-    color: "var(--text-muted)",
-    fontSize: "18px",
-    marginTop: "4px",
-  },
-  label: {
-    display: "block",
-    fontSize: "11px",
-    fontWeight: "700",
-    textTransform: "uppercase",
-    color: "var(--text-muted)",
-    letterSpacing: "0.5px",
-    marginBottom: "2px",
-  },
-  value: {
-    fontSize: "14px",
-    fontWeight: "500",
-    margin: 0,
-  },
-  downloadLink: {
-    fontSize: "14px",
-    color: "var(--primary-color)",
-    fontWeight: "600",
-    textDecoration: "none",
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-  },
-  uploadCol: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "24px",
-  },
-  uploadCard: {
-    padding: "32px",
-  },
-  uploadDesc: {
-    fontSize: "14px",
-    color: "var(--text-secondary)",
-    marginBottom: "24px",
-    lineHeight: "1.5",
-  },
-  fileDropZone: {
-    border: "2px dashed var(--border-color)",
-    borderRadius: "12px",
-    padding: "40px 20px",
-    textAlign: "center",
-    cursor: "pointer",
-    transition: "all 0.2s",
-    marginBottom: "24px",
-    backgroundColor: "var(--background-color)",
-  },
-  dropZoneLabel: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "12px",
-    cursor: "pointer",
-    fontSize: "14px",
-    color: "var(--text-muted)",
-  },
-  selectedFile: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "8px",
-    color: "var(--text-primary)",
-    fontWeight: "600",
-  },
-  submitBtn: {
-    width: "100%",
-  },
-  emptyHint: {
-    padding: "24px",
-    textAlign: "center",
-    color: "var(--text-muted)",
-    fontSize: "13px",
-  },
-  loading: {
-    textAlign: "center",
-    padding: "100px",
-    color: "var(--text-muted)",
-  }
+        {/* Right Col - Status */}
+        <div style={{ display:"flex", flexDirection:"column", gap:24 }}>
+           {submission ? (
+             <>
+               <div style={{ background:"var(--surface-1)", borderRadius:24, padding:32, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)", position:"relative", overflow:"hidden" }}>
+                  <div style={{ position:"absolute", top:0, left:0, bottom:0, width:4, background:submission.grade?"#10b981":"#f59e0b" }} />
+                  <h3 style={{ fontSize:12, fontWeight:800, color:"var(--text-tertiary)", textTransform:"uppercase", letterSpacing:"1px", margin:"0 0 20px" }}>Academic Status</h3>
+                  
+                  <div style={{ marginBottom:28 }}>
+                     <div style={{ fontSize:11, fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:8 }}>Final Grade</div>
+                     <div style={{ fontSize:40, fontWeight:900, color:submission.grade?"var(--primary-color)":"var(--text-tertiary)", fontFamily:"'Outfit', sans-serif" }}>{submission.grade || "PENDING"}</div>
+                  </div>
+
+                  <div>
+                     <div style={{ fontSize:11, fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:8 }}>Evaluator Remarks</div>
+                     <div style={{ fontSize:14, color:"var(--text-secondary)", lineHeight:1.6, background:"var(--surface-2)", padding:16, borderRadius:12 }}>
+                       {submission.feedback || "Evaluator has not left remarks yet."}
+                     </div>
+                  </div>
+               </div>
+
+               <div style={{ background:"var(--surface-1)", borderRadius:24, padding:24, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)" }}>
+                  <h3 style={{ fontSize:12, fontWeight:800, color:"var(--text-tertiary)", textTransform:"uppercase", letterSpacing:"1px", margin:"0 0 16px" }}>Submission Footprint</h3>
+                  <div style={{ display:"grid", gap:16 }}>
+                     <div>
+                       <div style={{ fontSize:11, fontWeight:700, color:"var(--text-muted)" }}>Date Submitted</div>
+                       <div style={{ fontSize:14, fontWeight:600, color:"var(--text-primary)" }}>{new Date(submission.submissionDate).toLocaleString()}</div>
+                     </div>
+                     <div>
+                       <div style={{ fontSize:11, fontWeight:700, color:"var(--text-muted)", marginBottom:4 }}>Valid Attachment</div>
+                       <a href={getFullFileUrl(submission.fileLink)} target="_blank" rel="noreferrer" style={{ fontSize:13, fontWeight:700, color:"var(--primary-color)", textDecoration:"none", padding:"6px 12px", background:"rgba(59,130,246,0.1)", borderRadius:99, display:"inline-block" }}>↓ Download Backup</a>
+                     </div>
+                  </div>
+               </div>
+             </>
+           ) : (
+             <div style={{ background:"var(--surface-1)", border:"1px dashed var(--border-medium)", borderRadius:24, padding:40, textAlign:"center", color:"var(--text-tertiary)" }}>
+               <div style={{ fontSize:40, marginBottom:16 }}>📑</div>
+               <div style={{ fontSize:15, fontWeight:700 }}>Awaiting Submission</div>
+               <p style={{ fontSize:13, margin:0 }}>Upload your file on the left to begin.</p>
+             </div>
+           )}
+        </div>
+
+      </div>
+    </div>
+  );
 };
 
 export default StudentSubmissionPage;

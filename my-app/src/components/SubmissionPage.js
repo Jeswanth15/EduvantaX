@@ -1,160 +1,111 @@
-// src/components/SubmissionPage.js
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import {
-  getAssignmentCompliance,
-  updateGradeAndFeedback
-} from "../utils/api";
+import { getAssignmentCompliance, updateGradeAndFeedback } from "../utils/api";
 import { getDecodedToken } from "../utils/authHelper";
-import {
-  FaCheckCircle, FaUser, FaCalendarAlt,
-  FaGraduationCap, FaSave, FaExclamationCircle, FaDownload,
-  FaClock, FaUsers
-} from "react-icons/fa";
 
 const SubmissionPage = () => {
   const { assignmentId } = useParams();
-  const decoded = getDecodedToken();
-  const role = decoded?.role;
-
   const [complianceData, setComplianceData] = useState(null);
   const [gradeMap, setGradeMap] = useState({});
   const [feedbackMap, setFeedbackMap] = useState({});
   const [pageLoading, setPageLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("submitted"); // "submitted" or "pending"
+  const [activeTab, setActiveTab] = useState("submitted");
 
   const loadCompliance = async () => {
     try {
       setPageLoading(true);
       const res = await getAssignmentCompliance(assignmentId);
       setComplianceData(res.data);
-    } catch (err) {
-      console.error("Error loading compliance data:", err);
-    } finally {
-      setPageLoading(false);
-    }
+    } catch (err) { console.error("Error loading compliance", err); } 
+    finally { setPageLoading(false); }
   };
 
-  useEffect(() => {
-    if (assignmentId) loadCompliance();
-  }, [assignmentId]);
+  useEffect(() => { if (assignmentId) loadCompliance(); }, [assignmentId]);
 
   const handleUpdateGrade = async (submissionId) => {
     const grade = gradeMap[submissionId];
     const feedback = feedbackMap[submissionId];
-
     if (!grade) return alert("Please enter a grade");
-
     try {
       await updateGradeAndFeedback(submissionId, grade, feedback || "");
-      alert("Grade updated successfully");
       loadCompliance();
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update grade");
-    }
+    } catch { alert("Failed to update grade"); }
   };
 
   const getFullFileUrl = (url) => {
     if (!url) return "#";
-    if (url.startsWith("http")) return url;
-    return `http://localhost:8080${url}`;
+    return url.startsWith("http") ? url : `http://localhost:8080${url}`;
   };
 
-  if (pageLoading) return <div style={styles.loading}>Generating compliance report...</div>;
-  if (!complianceData) return <div style={styles.emptyState}>No data found.</div>;
+  if (pageLoading) return <div style={{textAlign:"center", padding:100, color:"var(--text-tertiary)"}}>Generating compliance report...</div>;
+  if (!complianceData) return <div style={{textAlign:"center", padding:100, color:"var(--text-tertiary)"}}>No data found.</div>;
 
   const submittedStudents = complianceData.statuses.filter(s => s.submitted);
   const pendingStudents = complianceData.statuses.filter(s => !s.submitted);
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <div style={styles.headerTop}>
-          <h1 style={styles.title}>{complianceData.assignmentTitle}</h1>
-          <div style={styles.statsBadge}>
-            <FaUsers /> {complianceData.totalStudents} Total Students
+    <div style={{ maxWidth: 1000, margin: "0 auto", paddingBottom: 40 }}>
+      {/* Header */}
+      <div style={{ background:"linear-gradient(135deg, #1e40af, #3b82f6)", borderRadius:24, padding:32, color:"white", marginBottom:32, boxShadow:"0 12px 32px rgba(37,99,235,0.25)" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+          <div>
+            <div style={{ fontSize:12, fontWeight:800, color:"#93c5fd", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Coursework</div>
+            <h1 style={{ fontSize:28, fontWeight:900, margin:"0 0 8px", fontFamily:"'Outfit', sans-serif" }}>{complianceData.assignmentTitle}</h1>
+            <p style={{ margin:0, color:"#bfdbfe", fontSize:14 }}>Reviewing submissions & marking</p>
+          </div>
+          <div style={{ background:"rgba(255,255,255,0.15)", backdropFilter:"blur(10px)", border:"1px solid rgba(255,255,255,0.3)", padding:"12px 20px", borderRadius:16, textAlign:"center" }}>
+            <div style={{ fontSize:24, fontWeight:900, lineHeight:1 }}>{complianceData.totalStudents}</div>
+            <div style={{ fontSize:10, fontWeight:700, color:"#bfdbfe", textTransform:"uppercase", marginTop:4 }}>Cohort Total</div>
           </div>
         </div>
-        <p style={styles.subtitle}>Track submissions and grade student work</p>
       </div>
 
-      <div style={styles.tabContainer}>
-        <button
-          style={{ ...styles.tab, ...(activeTab === "submitted" ? styles.activeTab : {}) }}
-          onClick={() => setActiveTab("submitted")}
-        >
+      {/* Tabs */}
+      <div style={{ display:"flex", gap:12, marginBottom:24, background:"var(--surface-1)", padding:8, borderRadius:16, border:"1px solid var(--border-light)", width:"fit-content", boxShadow:"var(--shadow-sm)" }}>
+        <button onClick={() => setActiveTab("submitted")} style={{ padding:"10px 24px", borderRadius:10, border:"none", fontWeight:700, fontSize:13.5, cursor:"pointer", transition:"all 0.2s", background: activeTab==="submitted"?"linear-gradient(135deg, #10b981, #059669)":"transparent", color: activeTab==="submitted"?"white":"var(--text-secondary)", boxShadow: activeTab==="submitted"?"0 4px 12px rgba(16,185,129,0.3)":"none" }}>
           Submitted ({submittedStudents.length})
         </button>
-        <button
-          style={{ ...styles.tab, ...(activeTab === "pending" ? styles.activeTab : {}) }}
-          onClick={() => setActiveTab("pending")}
-        >
-          Pending ({pendingStudents.length})
+        <button onClick={() => setActiveTab("pending")} style={{ padding:"10px 24px", borderRadius:10, border:"none", fontWeight:700, fontSize:13.5, cursor:"pointer", transition:"all 0.2s", background: activeTab==="pending"?"linear-gradient(135deg, #f59e0b, #d97706)":"transparent", color: activeTab==="pending"?"white":"var(--text-secondary)", boxShadow: activeTab==="pending"?"0 4px 12px rgba(245,158,11,0.3)":"none" }}>
+          Awaiting ({pendingStudents.length})
         </button>
       </div>
 
-      <div style={styles.listSection}>
+      {/* Content */}
+      <div style={{ animation:"pageEnter 0.4s ease-out" }}>
         {activeTab === "submitted" ? (
           submittedStudents.length === 0 ? (
-            <div className="premium-card" style={styles.emptyState}>
-              <FaExclamationCircle size={32} style={{ opacity: 0.2, marginBottom: "12px" }} />
-              <p>No submissions found yet.</p>
-            </div>
+            <div style={{ background:"var(--surface-1)", border:"1px dashed var(--border-medium)", borderRadius:20, padding:60, textAlign:"center", color:"var(--text-tertiary)" }}>No submissions received yet.</div>
           ) : (
-            <div style={styles.submissionsGrid}>
-              {submittedStudents.map((s) => (
-                <div key={s.studentId} className="premium-card" style={styles.subCard}>
-                  <div style={styles.subTop}>
-                    <div style={styles.studentInfo}>
-                      <div style={styles.avatar}><FaUser /></div>
+            <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+              {submittedStudents.map((s, i) => (
+                <div key={s.studentId} style={{ background:"var(--surface-1)", border:"1px solid var(--border-light)", borderRadius:20, overflow:"hidden", boxShadow:"var(--shadow-sm)", animation:`slideInRight 0.3s ease-out ${i*40}ms both` }}>
+                  <div style={{ padding:"20px 24px", background:"var(--surface-2)", borderBottom:"1px solid var(--border-subtle)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:14 }}>
+                      <div style={{ width:40, height:40, borderRadius:12, background:"#3b82f6", color:"white", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:800, fontSize:16, boxShadow:"0 4px 12px rgba(59,130,246,0.3)" }}>
+                        {s.studentName.charAt(0)}
+                      </div>
                       <div>
-                        <div style={styles.studentName}>{s.studentName}</div>
-                        <div style={styles.subDate}>
-                          <FaCalendarAlt size={10} /> Submitted on: {new Date(s.submission.submissionDate).toLocaleDateString()}
-                        </div>
+                        <div style={{ fontSize:15, fontWeight:800, color:"var(--text-primary)" }}>{s.studentName}</div>
+                        <div style={{ fontSize:12, fontWeight:600, color:"var(--text-secondary)", marginTop:2 }}>Submitted: {new Date(s.submission.submissionDate).toLocaleString()}</div>
                       </div>
                     </div>
-                    <a
-                      href={getFullFileUrl(s.submission.fileLink)}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={styles.downloadBtn}
-                    >
-                      <FaDownload /> View Work
+                    <a href={getFullFileUrl(s.submission.fileLink)} target="_blank" rel="noreferrer" style={{ background:"rgba(59,130,246,0.1)", color:"#3b82f6", border:"1px solid rgba(59,130,246,0.2)", padding:"8px 16px", borderRadius:10, fontSize:13, fontWeight:700, textDecoration:"none", transition:"all 0.2s" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(59,130,246,0.15)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(59,130,246,0.1)"}>
+                      📎 View Source
                     </a>
                   </div>
-
-                  <div style={styles.subBottom}>
-                    <div style={styles.gradingForm}>
-                      <div style={styles.formRow}>
-                        <div style={{ flex: 1 }}>
-                          <label style={styles.inputLabel}>Grade</label>
-                          <input
-                            type="text"
-                            className="modern-input"
-                            placeholder={s.submission.grade || "Enter grade..."}
-                            onChange={(e) => setGradeMap({ ...gradeMap, [s.submission.submissionId]: e.target.value })}
-                          />
-                        </div>
-                        <div style={{ flex: 3 }}>
-                          <label style={styles.inputLabel}>Feedback</label>
-                          <input
-                            type="text"
-                            className="modern-input"
-                            placeholder={s.submission.feedback || "Add feedback..."}
-                            onChange={(e) => setFeedbackMap({ ...feedbackMap, [s.submission.submissionId]: e.target.value })}
-                          />
-                        </div>
-                        <button
-                          className="modern-btn btn-primary"
-                          style={styles.saveBtn}
-                          onClick={() => handleUpdateGrade(s.submission.submissionId)}
-                        >
-                          <FaSave /> Save
-                        </button>
-                      </div>
-                    </div>
+                  
+                  <div style={{ padding:24, display:"flex", alignItems:"center", gap:16, background:"var(--surface-1)" }}>
+                     <div style={{ flex:1 }}>
+                       <label style={{ fontSize:12, fontWeight:700, color:"var(--text-secondary)", marginBottom:6, display:"block", textTransform:"uppercase" }}>Grade Entry</label>
+                       <input className="form-input" placeholder={s.submission.grade || "Out of 100..."} onChange={e=>setGradeMap({...gradeMap, [s.submission.submissionId]:e.target.value})} style={{ borderRadius:10 }} />
+                     </div>
+                     <div style={{ flex:3 }}>
+                       <label style={{ fontSize:12, fontWeight:700, color:"var(--text-secondary)", marginBottom:6, display:"block", textTransform:"uppercase" }}>Teacher Feedback (Optional)</label>
+                       <input className="form-input" placeholder={s.submission.feedback || "Strengths, weaknesses..."} onChange={e=>setFeedbackMap({...feedbackMap, [s.submission.submissionId]:e.target.value})} style={{ borderRadius:10 }} />
+                     </div>
+                     <button onClick={()=>handleUpdateGrade(s.submission.submissionId)} style={{ padding:"12px 24px", alignSelf:"flex-end", height:"auto", borderRadius:10, background:"linear-gradient(135deg, #10b981, #059669)", color:"white", border:"none", fontWeight:700, cursor:"pointer", boxShadow:"0 4px 12px rgba(16,185,129,0.3)" }}>
+                        Mark Saved
+                     </button>
                   </div>
                 </div>
               ))}
@@ -162,213 +113,28 @@ const SubmissionPage = () => {
           )
         ) : (
           pendingStudents.length === 0 ? (
-            <div className="premium-card" style={styles.emptyState}>
-              <FaCheckCircle size={32} style={{ color: "#10b981", opacity: 0.4, marginBottom: "12px" }} />
-              <p>All students have submitted their work!</p>
+            <div style={{ background:"var(--surface-1)", border:"1px solid var(--border-light)", borderRadius:20, padding:60, textAlign:"center" }}>
+               <div style={{ fontSize:48, marginBottom:16 }}>🎉</div>
+               <div style={{ fontSize:15, fontWeight:700, color:"#10b981" }}>All 100% submitted! No pending students.</div>
             </div>
           ) : (
-            <div style={styles.pendingGrid}>
-              {pendingStudents.map((s) => (
-                <div key={s.studentId} className="premium-card" style={styles.pendingCard}>
-                  <div style={styles.pendingInfo}>
-                    <div style={styles.pendingAvatar}><FaUser /></div>
-                    <div>
-                      <div style={styles.studentName}>{s.studentName}</div>
-                      <div style={styles.subStatus}><FaClock size={10} /> Not Submitted</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+             <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(250px, 1fr))", gap:16 }}>
+               {pendingStudents.map((s, i) => (
+                 <div key={s.studentId} style={{ background:"var(--surface-1)", border:"1px solid rgba(245,158,11,0.3)", borderRadius:16, padding:20, display:"flex", alignItems:"center", gap:14, boxShadow:"var(--shadow-sm)", animation:`scaleIn 0.3s var(--ease-spring) ${i*30}ms both` }}>
+                   <div style={{ width:36, height:36, borderRadius:12, background:"rgba(245,158,11,0.1)", color:"#d97706", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:800, fontSize:15 }}>{s.studentName.charAt(0)}</div>
+                   <div>
+                     <div style={{ fontSize:14, fontWeight:700, color:"var(--text-primary)" }}>{s.studentName}</div>
+                     <div style={{ fontSize:11.5, fontWeight:700, color:"#f59e0b", marginTop:2 }}>⏳ Not Submitted</div>
+                   </div>
+                 </div>
+               ))}
+             </div>
           )
         )}
       </div>
+
     </div>
   );
-};
-
-const styles = {
-  container: {
-    maxWidth: "1000px",
-    margin: "0 auto",
-  },
-  header: {
-    marginBottom: "32px",
-  },
-  headerTop: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  title: {
-    fontSize: "28px",
-    fontWeight: "700",
-    marginBottom: "4px",
-  },
-  subtitle: {
-    color: "var(--text-muted)",
-    fontSize: "14px",
-  },
-  statsBadge: {
-    backgroundColor: "rgba(37, 99, 235, 0.1)",
-    color: "var(--primary-color)",
-    padding: "8px 16px",
-    borderRadius: "20px",
-    fontSize: "13px",
-    fontWeight: "700",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-  },
-  tabContainer: {
-    display: "flex",
-    gap: "8px",
-    marginBottom: "24px",
-    borderBottom: "1px solid var(--border-color)",
-    paddingBottom: "16px",
-  },
-  tab: {
-    padding: "10px 24px",
-    borderRadius: "8px",
-    border: "1px solid var(--border-color)",
-    background: "white",
-    fontSize: "14px",
-    fontWeight: "600",
-    cursor: "pointer",
-    transition: "all 0.2s",
-    color: "var(--text-muted)",
-  },
-  activeTab: {
-    backgroundColor: "var(--primary-color)",
-    color: "white",
-    borderColor: "var(--primary-color)",
-  },
-  listSection: {
-    marginTop: "0",
-  },
-  submissionsGrid: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "20px",
-  },
-  subCard: {
-    padding: "0",
-    overflow: "hidden",
-  },
-  subTop: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "20px 24px",
-    backgroundColor: "rgba(0,0,0,0.02)",
-    borderBottom: "1px solid var(--border-color)",
-  },
-  studentInfo: {
-    display: "flex",
-    alignItems: "center",
-    gap: "16px",
-  },
-  avatar: {
-    width: "40px",
-    height: "40px",
-    borderRadius: "50%",
-    backgroundColor: "var(--primary-color)",
-    color: "white",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "18px",
-  },
-  studentName: {
-    fontWeight: "700",
-    fontSize: "15px",
-  },
-  subDate: {
-    fontSize: "12px",
-    color: "var(--text-muted)",
-    display: "flex",
-    alignItems: "center",
-    gap: "4px",
-    marginTop: "2px",
-  },
-  downloadBtn: {
-    color: "var(--primary-color)",
-    fontSize: "13px",
-    fontWeight: "700",
-    textDecoration: "none",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    padding: "8px 16px",
-    borderRadius: "var(--radius-sm)",
-    border: "1px solid var(--primary-color)",
-    transition: "all 0.2s",
-  },
-  subBottom: {
-    padding: "20px 24px",
-  },
-  gradingForm: {
-    width: "100%",
-  },
-  formRow: {
-    display: "flex",
-    alignItems: "flex-end",
-    gap: "16px",
-  },
-  inputLabel: {
-    display: "block",
-    fontSize: "12px",
-    fontWeight: "700",
-    color: "var(--text-muted)",
-    marginBottom: "6px",
-  },
-  saveBtn: {
-    padding: "10px 24px",
-    height: "42px",
-  },
-  pendingGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-    gap: "16px",
-  },
-  pendingCard: {
-    padding: "16px",
-  },
-  pendingInfo: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-  },
-  pendingAvatar: {
-    width: "32px",
-    height: "32px",
-    borderRadius: "50%",
-    backgroundColor: "var(--border-color)",
-    color: "var(--text-muted)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "14px",
-  },
-  subStatus: {
-    fontSize: "11px",
-    color: "#f59e0b",
-    fontWeight: "700",
-    display: "flex",
-    alignItems: "center",
-    gap: "4px",
-    marginTop: "2px",
-  },
-  emptyState: {
-    textAlign: "center",
-    padding: "40px",
-    color: "var(--text-muted)",
-  },
-  loading: {
-    textAlign: "center",
-    padding: "40px",
-    color: "var(--text-muted)",
-  }
 };
 
 export default SubmissionPage;

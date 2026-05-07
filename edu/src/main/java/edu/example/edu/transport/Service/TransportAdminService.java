@@ -139,6 +139,26 @@ public class TransportAdminService {
     public void deleteRoute(Long id) {
         routeRepository.deleteById(id);
     }
+    
+    public List<BusStop> getProposedStops() {
+        return busStopRepository.findByIsApprovedFalse();
+    }
+    
+    @Transactional
+    public BusStop approveStop(Long stopId, Integer newOrder) {
+        BusStop stop = busStopRepository.findById(stopId)
+                .orElseThrow(() -> new RuntimeException("Stop not found"));
+        stop.setApproved(true);
+        if (newOrder != null) {
+            stop.setStopOrder(newOrder);
+        }
+        return busStopRepository.save(stop);
+    }
+    
+    @Transactional
+    public void deleteStop(Long id) {
+        busStopRepository.deleteById(id);
+    }
 
     public User updateStudentType(Long studentId, String type) {
         User user = userRepository.findById(studentId)
@@ -214,7 +234,7 @@ public class TransportAdminService {
         }
 
         // Current and Next stop logic
-        List<BusStop> stops = busStopRepository.findByRouteIdOrderByStopOrderAsc(route.getId());
+        List<BusStop> stops = busStopRepository.findByRouteIdAndIsApprovedTrueOrderByStopOrderAsc(route.getId());
         if (trip.getLastReachedStopId() != null) {
             BusStop lastStop = busStopRepository.findById(trip.getLastReachedStopId()).orElse(null);
             if (lastStop != null) {

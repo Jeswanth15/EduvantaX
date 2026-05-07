@@ -1,14 +1,7 @@
-// src/components/StudentAssignmentsPage.js
 import React, { useEffect, useState } from "react";
-import {
-  getAssignmentsByClassroom,
-  getAllClassSubjects,
-} from "../utils/api";
+import { getAssignmentsByClassroom, getAllClassSubjects } from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import { getDecodedToken } from "../utils/authHelper";
-import {
-  FaBook, FaClock, FaChevronRight, FaPaperclip, FaExclamationCircle
-} from "react-icons/fa";
 
 const StudentAssignmentsPage = () => {
   const decoded = getDecodedToken();
@@ -23,195 +16,73 @@ const StudentAssignmentsPage = () => {
 
   useEffect(() => {
     if (!classroomId || role !== "STUDENT") return;
-
     const loadData = async () => {
       try {
         setLoading(true);
-        const [assRes, csRes] = await Promise.all([
-          getAssignmentsByClassroom(classroomId),
-          getAllClassSubjects(),
-        ]);
-
+        const [assRes, csRes] = await Promise.all([getAssignmentsByClassroom(classroomId), getAllClassSubjects()]);
         setAssignments(assRes.data || []);
-        const cs = (csRes.data || []).filter(
-          (c) => c.classroomId === classroomId
-        );
-        setClassSubjects(cs);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+        setClassSubjects((csRes.data || []).filter(c => c.classroomId === classroomId));
+      } catch (err) { console.error(err); } finally { setLoading(false); }
     };
-
     loadData();
   }, [classroomId, role]);
 
   const getSubjectName = (subjectId) => {
-    const sub = classSubjects.find((s) => s.subjectId === subjectId);
-    return sub ? sub.subjectName : "General";
+    const sub = classSubjects.find(s => s.subjectId === subjectId);
+    return sub ? sub.subjectName : "General Space";
   };
 
-  if (loading) return <div style={styles.loading}>Loading your assignments...</div>;
+  if (loading) return <div style={{textAlign:"center", padding:100, color:"var(--text-tertiary)"}}>Loading your coursework...</div>;
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>My Assignments</h1>
-        <p style={styles.subtitle}>Tasks and coursework for your active classes</p>
+    <div style={{ maxWidth: 1200, margin: "0 auto", paddingBottom: 40 }}>
+      {/* Header */}
+      <div style={{ background:"linear-gradient(135deg, #1e40af, #3b82f6)", borderRadius:24, padding:32, color:"white", marginBottom:32, boxShadow:"0 12px 32px rgba(37,99,235,0.25)" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+          <div>
+            <div style={{ fontSize:12, fontWeight:800, color:"#93c5fd", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Coursework Portal</div>
+            <h1 style={{ fontSize:28, fontWeight:900, margin:"0 0 8px", fontFamily:"'Outfit', sans-serif" }}>My Assignments</h1>
+            <p style={{ margin:0, color:"#bfdbfe", fontSize:14 }}>Manage tasks and upcoming deliverables.</p>
+          </div>
+          <div style={{ background:"rgba(255,255,255,0.15)", backdropFilter:"blur(10px)", border:"1px solid rgba(255,255,255,0.3)", padding:"12px 20px", borderRadius:16, textAlign:"center" }}>
+            <div style={{ fontSize:24, fontWeight:900, lineHeight:1 }}>{assignments.length}</div>
+            <div style={{ fontSize:10, fontWeight:700, color:"#bfdbfe", textTransform:"uppercase", marginTop:4 }}>Active Tasks</div>
+          </div>
+        </div>
       </div>
 
       {assignments.length === 0 ? (
-        <div className="premium-card" style={styles.emptyState}>
-          <FaExclamationCircle size={40} style={{ opacity: 0.2, marginBottom: "16px" }} />
-          <h3>No Assignments Assigned</h3>
-          <p>You're all caught up! Check back later for new tasks.</p>
+        <div style={{ background:"var(--surface-1)", border:"1px dashed var(--border-medium)", borderRadius:20, padding:80, textAlign:"center", color:"var(--text-secondary)" }}>
+          <div style={{ fontSize:48, marginBottom:16 }}>🎉</div>
+          <div style={{ fontSize:16, fontWeight:700 }}>You're all caught up!</div>
+          <p style={{ fontSize:14, color:"var(--text-tertiary)" }}>No pending deliverables right now.</p>
         </div>
       ) : (
-        <div className="grid-auto-fill">
-          {assignments.map((a) => (
-            <div
-              key={a.assignmentId}
-              className="premium-card hover-lift"
-              style={styles.card}
-              onClick={() => navigate(`/student/assignments/${a.assignmentId}/submission`)}
-            >
-              <div style={styles.cardHeader}>
-                <div style={styles.badge}>{getSubjectName(a.subjectId)}</div>
-                <div style={styles.dateInfo}>
-                  <FaClock size={12} /> Due: {a.dueDate}
-                </div>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(320px, 1fr))", gap:20 }}>
+          {assignments.map((a, i) => (
+            <div key={a.assignmentId} onClick={() => navigate(`/student/assignments/${a.assignmentId}/submission`)} style={{ background:"var(--surface-1)", border:"1px solid var(--border-light)", borderRadius:20, padding:24, display:"flex", flexDirection:"column", gap:16, cursor:"pointer", boxShadow:"var(--shadow-sm)", transition:"all 0.3s cubic-bezier(0.4, 0, 0.2, 1)", animation:`slideInRight 0.3s ease-out ${i*30}ms both` }} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px)"; e.currentTarget.style.boxShadow="var(--shadow-md)"; e.currentTarget.style.borderColor="var(--primary-color)"}} onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)"; e.currentTarget.style.boxShadow="var(--shadow-sm)"; e.currentTarget.style.borderColor="var(--border-light)"}}>
+              
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <span style={{ background:"rgba(59,130,246,0.1)", color:"#3b82f6", padding:"6px 12px", borderRadius:99, fontSize:11, fontWeight:800, textTransform:"uppercase", letterSpacing:"0.5px" }}>{getSubjectName(a.subjectId)}</span>
+                <span style={{ fontSize:12, fontWeight:700, color:"#ef4444", display:"flex", alignItems:"center", gap:6 }}>⏳ Due: {a.dueDate}</span>
               </div>
 
-              <h3 style={styles.assignmentTitle}>{a.title}</h3>
-              <p style={styles.description}>{a.description}</p>
-
-              <div style={styles.cardFooter}>
-                <div style={styles.attachmentInfo}>
-                  {a.fileLink && (
-                    <div style={styles.attachmentBadge}>
-                      <FaPaperclip size={12} /> Resource Included
-                    </div>
-                  )}
-                </div>
-                <div style={styles.actionBtn}>
-                  Open Task <FaChevronRight size={12} />
-                </div>
+              <div>
+                <h3 style={{ margin:"0 0 8px", fontSize:18, fontWeight:800, color:"var(--text-primary)", lineHeight:1.3 }}>{a.title}</h3>
+                <p style={{ margin:0, fontSize:13.5, color:"var(--text-secondary)", lineHeight:1.6, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{a.description}</p>
               </div>
+
+              <div style={{ marginTop:"auto", paddingTop:16, borderTop:"1px solid var(--border-subtle)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                {a.fileLink ? <span style={{ fontSize:12, fontWeight:700, color:"#10b981", display:"flex", alignItems:"center", gap:6 }}>📎 Assets Attached</span> : <span />}
+                <span style={{ fontSize:13, fontWeight:800, color:"var(--primary-color)" }}>Open Task →</span>
+              </div>
+              
             </div>
           ))}
         </div>
       )}
     </div>
   );
-};
-
-const styles = {
-  container: {
-    maxWidth: "1000px",
-    margin: "0 auto",
-  },
-  header: {
-    marginBottom: "32px",
-  },
-  title: {
-    fontSize: "28px",
-    fontWeight: "700",
-    marginBottom: "4px",
-  },
-  subtitle: {
-    color: "var(--text-muted)",
-    fontSize: "14px",
-  },
-  subtitle: {
-    color: "var(--text-muted)",
-    fontSize: "14px",
-  },
-  card: {
-    padding: "24px",
-    cursor: "pointer",
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-  },
-  cardHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  badge: {
-    backgroundColor: "rgba(30, 136, 229, 0.1)",
-    color: "var(--primary-color)",
-    padding: "4px 12px",
-    borderRadius: "20px",
-    fontSize: "12px",
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-  },
-  dateInfo: {
-    fontSize: "13px",
-    color: "var(--text-muted)",
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-  },
-  assignmentTitle: {
-    margin: 0,
-    fontSize: "20px",
-    fontWeight: "700",
-    color: "var(--text-primary)",
-  },
-  description: {
-    margin: 0,
-    fontSize: "14px",
-    color: "var(--text-secondary)",
-    lineHeight: "1.6",
-    display: "-webkit-box",
-    WebkitLineClamp: "2",
-    WebkitBoxOrient: "vertical",
-    overflow: "hidden",
-  },
-  cardFooter: {
-    marginTop: "8px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingTop: "16px",
-    borderTop: "1px solid var(--border-color)",
-  },
-  attachmentInfo: {
-    flex: 1,
-  },
-  attachmentBadge: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "6px",
-    fontSize: "12px",
-    color: "var(--primary-color)",
-    fontWeight: "600",
-  },
-  actionBtn: {
-    fontSize: "14px",
-    fontWeight: "700",
-    color: "var(--primary-color)",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-  },
-  emptyState: {
-    textAlign: "center",
-    padding: "80px 40px",
-    color: "var(--text-muted)",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-  },
-  loading: {
-    textAlign: "center",
-    padding: "40px",
-    color: "var(--text-muted)",
-  }
 };
 
 export default StudentAssignmentsPage;

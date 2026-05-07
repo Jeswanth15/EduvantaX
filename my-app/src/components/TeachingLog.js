@@ -1,12 +1,6 @@
 import React, { useEffect, useState } from "react";
-
 import { getDecodedToken } from "../utils/authHelper";
-import {
-  getAllClassSubjects,
-  createOrUpdateTeachingLog,
-  getTeachingLogsByClassSubject,
-  deleteTeachingLog,
-} from "../utils/api";
+import { getAllClassSubjects, createOrUpdateTeachingLog, getTeachingLogsByClassSubject, deleteTeachingLog } from "../utils/api";
 
 const TeachingLog = () => {
   const decoded = getDecodedToken();
@@ -19,247 +13,103 @@ const TeachingLog = () => {
   const [topic, setTopic] = useState("");
 
   useEffect(() => {
-    fetchClassSubjects();
-  }, []);
-
-  const fetchClassSubjects = async () => {
-    try {
-      const res = await getAllClassSubjects();
+    getAllClassSubjects().then(res => {
       let all = res.data || [];
-
-      if (userRole === "TEACHER") {
-        all = all.filter((cs) => cs.teacherId === teacherId);
-      }
-
+      if (userRole === "TEACHER") all = all.filter(cs => cs.teacherId === teacherId);
       setClassSubjects(all);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    }).catch(console.error);
+  }, [userRole, teacherId]);
 
   const fetchLogs = async (id) => {
-    try {
-      const res = await getTeachingLogsByClassSubject(id);
-      setLogs(res.data || []);
-    } catch (err) {
-      console.error(err);
-    }
+    try { const res = await getTeachingLogsByClassSubject(id); setLogs(res.data || []); } catch (err) { console.error(err); }
   };
 
-  const handleSelect = (id) => {
-    setSelectedId(id);
-    fetchLogs(id);
-  };
+  const handleSelect = (id) => { setSelectedId(id); fetchLogs(id); };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedId) return alert("Select a class first");
-
-    const dto = {
-      classSubjectId: selectedId,
-      topicTaught: topic,
-      teacherId,
-    };
-
+    if (!selectedId || !topic) return alert("Select class and enter topic.");
     try {
-      await createOrUpdateTeachingLog(dto);
-      setTopic("");
-      fetchLogs(selectedId);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to save log");
-    }
+      await createOrUpdateTeachingLog({ classSubjectId: selectedId, topicTaught: topic, teacherId });
+      setTopic(""); fetchLogs(selectedId);
+    } catch { alert("Failed to log"); }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete log?")) return;
-
-    try {
-      await deleteTeachingLog(id);
-      fetchLogs(selectedId);
-    } catch (err) {
-      console.error(err);
-    }
+    try { await deleteTeachingLog(id); fetchLogs(selectedId); } catch { console.error("Error"); }
   };
 
   return (
-    <div className="teaching-log-page">
-      <div className="content-wrapper">
-        <h2 className="page-title">📘 Teaching Logs</h2>
-
-        {/* CLASS-SUBJECT SELECT */}
-        <div className="card">
-          <h3>Select Class & Subject</h3>
-
-          {classSubjects.length === 0 ? (
-            <p className="empty-text">No class-subjects assigned.</p>
-          ) : (
-            <div className="chip-scroll">
-              {classSubjects.map((cs) => (
-                <button
-                  key={cs.id}
-                  className={`chip ${selectedId === cs.id ? "chip-active" : ""}`}
-                  onClick={() => handleSelect(cs.id)}
-                >
-                  {cs.classroomName || cs.classroom?.name} —{" "}
-                  {cs.subjectName || cs.subject?.name}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* ADD LOG */}
-        {selectedId && (
-          <div className="card">
-            <h3>Add Teaching Log</h3>
-            <form className="form-grid" onSubmit={handleSubmit}>
-              <textarea
-                placeholder="Enter topic taught..."
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                required
-              />
-              <button type="submit" className="btn-primary">
-                Save Log
-              </button>
-            </form>
-          </div>
-        )}
-
-        {/* EXISTING LOGS */}
-        {logs.length > 0 && (
-          <div className="card">
-            <h3>Existing Logs</h3>
-
-            <div className="log-list">
-              {logs.map((log) => (
-                <div key={log.id} className="log-card">
-                  <div>
-                    <strong className="log-title">{log.topicTaught}</strong>
-                    <div className="log-meta">
-                      Teacher: {log.teacher?.name || "N/A"} |
-                      {" " + new Date(log.taughtAt).toLocaleString()}
-                    </div>
-                  </div>
-
-                  {["ADMIN", "PRINCIPAL", "SCHOOLADMIN"].includes(userRole) && (
-                    <button className="delete-btn" onClick={() => handleDelete(log.id)}>
-                      🗑
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {selectedId && logs.length === 0 && (
-          <p className="empty-text">No logs yet for this class-subject.</p>
-        )}
+    <div style={{ maxWidth: 1000, margin: "0 auto", paddingBottom: 40 }}>
+      {/* Header */}
+      <div style={{ marginBottom: 32 }}>
+        <h1 style={{ fontSize:32, fontWeight:900, color:"var(--text-primary)", letterSpacing:"-0.03em", margin:"0 0 6px", fontFamily:"'Outfit', sans-serif" }}>Teaching Ledger</h1>
+        <p style={{ margin:0, fontSize:14, color:"var(--text-secondary)", fontWeight:500 }}>Immutable logs of daily instruction topics and pedagogy.</p>
       </div>
 
-      {/* ---------------- CSS ---------------- */}
-      <style>{`
-        .content-wrapper { padding:25px; max-width:900px; margin:auto; }
+      <div style={{ display:"grid", gridTemplateColumns:"320px 1fr", gap:28, alignItems:"start" }}>
+        
+        {/* Left Column */}
+        <div style={{ display:"flex", flexDirection:"column", gap:24, position:"sticky", top:20 }}>
+          <div style={{ background:"var(--surface-1)", borderRadius:20, padding:24, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)" }}>
+            <h3 style={{ fontSize:14, fontWeight:800, color:"var(--text-primary)", textTransform:"uppercase", letterSpacing:"1px", margin:"0 0 20px" }}>Active Classes</h3>
+            {classSubjects.length === 0 ? <div style={{padding:20, textAlign:"center", color:"var(--text-tertiary)"}}>No classes found.</div> : (
+              <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                {classSubjects.map(cs => (
+                  <div key={cs.id} onClick={() => handleSelect(cs.id)} style={{ padding:"14px 16px", borderRadius:12, border: selectedId===cs.id ? "1px solid var(--primary-color)" : "1px solid var(--border-light)", background: selectedId===cs.id ? "rgba(37,99,235,0.05)" : "var(--surface-2)", cursor:"pointer", transition:"all 0.2s" }} onMouseEnter={e=>{if(selectedId!==cs.id)e.currentTarget.style.background="var(--surface-3)"}} onMouseLeave={e=>{if(selectedId!==cs.id)e.currentTarget.style.background="var(--surface-2)"}}>
+                     <div style={{ fontWeight:800, fontSize:14, color:selectedId===cs.id?"var(--primary-color)":"var(--text-primary)" }}>{cs.classroomName || cs.classroom?.name}</div>
+                     <div style={{ fontSize:12, fontWeight:600, color:"var(--text-secondary)", marginTop:4 }}>{cs.subjectName || cs.subject?.name}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
-        .page-title {
-          text-align:center;
-          font-size:28px;
-          color:#0a4275;
-          margin-bottom:25px;
-          font-weight:700;
-        }
+        {/* Right Column */}
+        <div style={{ display:"flex", flexDirection:"column", gap:28 }}>
+           {!selectedId ? (
+              <div style={{ background:"var(--surface-1)", border:"1px dashed var(--border-medium)", borderRadius:24, minHeight:400, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", color:"var(--text-tertiary)", textAlign:"center", padding:40 }}>
+                 <div style={{ fontSize:48, marginBottom:16 }}>📖</div>
+                 <h3 style={{ fontSize:18, fontWeight:700, margin:"0 0 8px", color:"var(--text-secondary)" }}>Waiting for selection</h3>
+                 <p style={{ fontSize:14, maxWidth:300, lineHeight:1.5, margin:0 }}>Select a course to view or log a teaching session.</p>
+              </div>
+           ) : (
+             <>
+               <div style={{ background:"var(--surface-1)", borderRadius:20, padding:24, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)" }}>
+                  <h3 style={{ fontSize:16, fontWeight:800, color:"var(--text-primary)", margin:"0 0 20px", display:"flex", alignItems:"center", gap:10 }}>✏️ Record Log</h3>
+                  <form onSubmit={handleSubmit} style={{ display:"flex", flexDirection:"column", gap:16 }}>
+                    <textarea value={topic} onChange={e=>setTopic(e.target.value)} required placeholder="What was taught today? e.g. Quantum Mechanics Intro" className="form-input" style={{ borderRadius:12, resize:"none", minHeight:80, fontSize:14 }} />
+                    <button type="submit" style={{ alignSelf:"flex-end", padding:"12px 24px", borderRadius:10, background:"linear-gradient(135deg, #10b981, #059669)", color:"white", border:"none", fontWeight:800, cursor:"pointer", boxShadow:"0 4px 12px rgba(16,185,129,0.3)" }}>Submit Record</button>
+                  </form>
+               </div>
 
-        .card {
-          background:white;
-          padding:20px;
-          border-radius:12px;
-          box-shadow:0 3px 10px rgba(0,0,0,.1);
-          border: 1px solid var(--border-color);
-          margin-bottom:25px;
-        }
-
-        .chip-scroll {
-          display:flex;
-          overflow-x:auto;
-          gap:10px;
-          padding:10px 0;
-        }
-
-        .chip {
-          padding:8px 14px;
-          border-radius:20px;
-          background:#e6e9ef;
-          border:none;
-          cursor:pointer;
-          white-space:nowrap;
-          transition: all 0.2s;
-        }
-        .chip:hover {
-          background: #d1d5db;
-        }
-        .chip-active {
-          background:#0a4275;
-          color:white;
-        }
-
-        .form-grid { display:flex; flex-direction:column; gap:10px; }
-
-        textarea {
-          height:80px;
-          padding:10px;
-          border-radius:6px;
-          border:1px solid #ccc;
-          resize:none;
-          font-family: inherit;
-        }
-
-        .btn-primary {
-          background:#0a4275;
-          color:white;
-          border:none;
-          padding:10px;
-          border-radius:6px;
-          cursor:pointer;
-          font-weight:600;
-          transition: opacity 0.2s;
-        }
-        .btn-primary:hover {
-          opacity: 0.9;
-        }
-
-        .log-list { display:grid; gap:12px; }
-
-        .log-card {
-          background:#f7f9fc;
-          padding:14px;
-          border-radius:10px;
-          display:flex;
-          justify-content:space-between;
-          align-items:flex-start;
-          border: 1px solid #edf2f7;
-        }
-
-        .log-title { font-size:16px; font-weight:600; }
-        .log-meta { font-size:12px; color:gray; margin-top:4px; }
-
-        .delete-btn {
-          background:#d9534f;
-          border:none;
-          padding:6px 10px;
-          color:white;
-          border-radius:6px;
-          cursor:pointer;
-        }
-
-        .empty-text { color:gray; font-style:italic; text-align:center; }
-
-        @media(max-width:600px) {
-          .content-wrapper { padding:15px; }
-          .log-card { flex-direction:column; gap:10px; }
-        }
-      `}</style>
+               <div>
+                 <h3 style={{ fontSize:18, fontWeight:800, color:"var(--text-primary)", margin:"0 0 16px" }}>History Logs</h3>
+                 {logs.length === 0 ? <div style={{ background:"var(--surface-1)", borderRadius:20, padding:40, textAlign:"center", color:"var(--text-tertiary)", border:"1px solid var(--border-light)" }}>No logs found for this class.</div> : (
+                   <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+                     {logs.map((log, i) => (
+                       <div key={log.id} style={{ background:"var(--surface-1)", border:"1px solid var(--border-light)", borderRadius:16, padding:20, display:"flex", justifyContent:"space-between", alignItems:"flex-start", boxShadow:"var(--shadow-sm)", animation:`pageEnter 0.3s ease ${i*30}ms both` }}>
+                          <div>
+                            <div style={{ fontSize:16, fontWeight:700, color:"var(--text-primary)", lineHeight:1.5 }}>{log.topicTaught}</div>
+                            <div style={{ marginTop:12, display:"flex", gap:16, fontSize:12, fontWeight:600, color:"var(--text-tertiary)" }}>
+                               <span>👤 {log.teacher?.name || "N/A"}</span>
+                               <span>🕐 {new Date(log.taughtAt).toLocaleString()}</span>
+                            </div>
+                          </div>
+                          {["ADMIN", "PRINCIPAL", "SCHOOLADMIN"].includes(userRole) && (
+                            <button onClick={()=>handleDelete(log.id)} style={{ padding:6, borderRadius:6, background:"rgba(239,68,68,0.1)", color:"#ef4444", border:"none", cursor:"pointer" }}>🗑 Delete</button>
+                          )}
+                       </div>
+                     ))}
+                   </div>
+                 )}
+               </div>
+             </>
+           )}
+        </div>
+      </div>
     </div>
   );
 };

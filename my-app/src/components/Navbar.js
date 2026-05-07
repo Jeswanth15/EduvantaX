@@ -1,88 +1,36 @@
 import React from "react";
-import { Link } from "react-router-dom";
-import { getDecodedToken } from "../utils/authHelper";
-import { useTranslation } from "react-i18next";
 
+// Navbar brand mark — main nav controls live in Layout header
 const Navbar = () => {
-  const { t } = useTranslation();
-  const decoded = getDecodedToken();
-  const userName = decoded?.name || t("profile");
-
-  const getInitials = (name) => {
-    return name.split(" ").map(n => n[0]).join("").toUpperCase();
-  };
 
   return (
-    <nav style={styles.navbar}>
-      <h2 style={styles.logo}>EduPortal</h2>
-      <div style={styles.profileSection}>
-        <Link to="/profile" style={styles.profileLink}>
-          <span style={styles.userName}>{userName}</span>
-          <div style={styles.miniAvatar}>
-            {getInitials(userName)}
-          </div>
-        </Link>
+    <div style={{
+      display: "flex", alignItems: "center", justifyContent: "center",
+      gap: 12,
+    }}>
+      {/* Brand mark */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 8,
+      }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: 8,
+          background: "linear-gradient(135deg, #2563eb, #7c3aed)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 2px 8px rgba(37,99,235,0.35)",
+        }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L2 7l10 5 10-5-10-5z" fill="white" />
+            <path d="M2 17l10 5 10-5" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+          </svg>
+        </div>
+        <span style={{
+          fontSize: 14, fontWeight: 800,
+          color: "var(--text-primary)", letterSpacing: "-0.02em",
+          fontFamily: "'Outfit', sans-serif",
+        }}>NexusEdu</span>
       </div>
-    </nav>
+    </div>
   );
-};
-
-const styles = {
-  navbar: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "0 24px",
-    width: "100%",
-    height: "64px",
-    backgroundColor: "var(--surface-color)",
-    borderBottom: "1px solid var(--border-color)",
-    boxShadow: "var(--shadow-sm)",
-    position: "sticky",
-    top: 0,
-    zIndex: 100,
-  },
-  logo: {
-    margin: 0,
-    fontSize: "22px",
-    fontWeight: "700",
-    color: "var(--primary-color)",
-    fontFamily: "'Outfit', sans-serif",
-  },
-  profileSection: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-  },
-  profileLink: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    textDecoration: "none",
-    padding: "6px 14px",
-    borderRadius: "var(--radius-xl)",
-    transition: "var(--transition-fast)",
-    backgroundColor: "rgba(0, 0, 0, 0.03)",
-  },
-  userName: {
-    color: "var(--text-primary)",
-    fontWeight: "600",
-    fontSize: "14px",
-  },
-  miniAvatar: {
-    width: "32px",
-    height: "32px",
-    backgroundColor: "var(--primary-color)",
-    color: "white",
-    borderRadius: "50%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "12px",
-    fontWeight: "700",
-    border: "2px solid white",
-    boxShadow: "var(--shadow-sm)",
-  }
 };
 
 export default Navbar;

@@ -11,10 +11,6 @@ import {
   getAttendanceByClassDatePeriod,
 } from "../utils/api";
 import { getDecodedToken } from "../utils/authHelper";
-import {
-  FaFilter, FaUsers, FaUndo, FaCheckCircle,
-  FaTrash, FaUserCheck, FaRegCalendarAlt
-} from "react-icons/fa";
 
 const Attendance = ({ isTeacher = false }) => {
   const decoded = getDecodedToken();
@@ -36,50 +32,31 @@ const Attendance = ({ isTeacher = false }) => {
   const [attendanceMap, setAttendanceMap] = useState({});
   const [alreadyMarked, setAlreadyMarked] = useState({});
   const [loading, setLoading] = useState(false);
-  const [studentFetchError, setStudentFetchError] = useState("");
   const [selectAll, setSelectAll] = useState(false);
 
-  const getDayShort = (date) => {
-    const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-    return days[new Date(date).getDay()];
-  };
+  const getDayShort = (date) => ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][new Date(date).getDay()];
 
   useEffect(() => {
     if (!schoolId) return;
-    (async () => {
-      setLoading(true);
-      try {
-        const [cRes, tRes, csRes] = await Promise.all([
-          getAllClassrooms(schoolId),
-          getAllTimetables(),
-          getAllClassSubjects(),
-        ]);
-        setClassrooms(cRes.data || []);
-        setTimetables(tRes.data || []);
-        setClassSubjects(csRes.data || []);
-      } catch (err) {
-        console.error("Initial load error", err);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    setLoading(true);
+    Promise.all([
+      getAllClassrooms(schoolId),
+      getAllTimetables(),
+      getAllClassSubjects(),
+    ]).then(([c, t, cs]) => {
+      setClassrooms(c.data || []);
+      setTimetables(t.data || []);
+      setClassSubjects(cs.data || []);
+    }).catch(console.error).finally(()=>setLoading(false));
   }, [schoolId]);
 
-  const classSubjectsForClass = () =>
-    classSubjects.filter((cs) => cs.classroomId === selectedClassId);
+  const classSubjectsForClass = () => classSubjects.filter((cs) => cs.classroomId === selectedClassId);
 
   const availablePeriodsForSubject = () => {
     if (!selectedClassId || !selectedSubjectId || !selectedDate) return [];
     const day = getDayShort(selectedDate);
-    return timetables
-      .filter(
-        (t) =>
-          t.classroomId === selectedClassId &&
-          t.subjectId === selectedSubjectId &&
-          t.dayOfWeek.substring(0, 3).toUpperCase() === day
-      )
-      .map((t) => t.periodNumber)
-      .sort((a, b) => a - b);
+    return timetables.filter(t => t.classroomId === selectedClassId && t.subjectId === selectedSubjectId && t.dayOfWeek.substring(0, 3).toUpperCase() === day)
+      .map(t => t.periodNumber).sort((a, b) => a - b);
   };
 
   useEffect(() => {
@@ -88,87 +65,45 @@ const Attendance = ({ isTeacher = false }) => {
   }, [selectedSubjectId, selectedDate, timetables]);
 
   const checkCalendarForDate = async (date) => {
-    if (!date) {
-      setCalendarStatus(null);
-      setCalendarEntryId(null);
-      return;
-    }
+    if (!date) { setCalendarStatus(null); setCalendarEntryId(null); return; }
     try {
       const res = await getCalendarBySchool(schoolId);
-      const entries = res.data || [];
-      const found = entries.find((e) => e.date.split("T")[0] === date);
-      if (found) {
-        setCalendarStatus(found.status);
-        setCalendarEntryId(found.calendarId);
-      } else {
-        setCalendarStatus("WORKING");
-        setCalendarEntryId(null);
-      }
-    } catch (err) {
-      console.error("Calendar check error", err);
-      setCalendarStatus(null);
-      setCalendarEntryId(null);
-    }
+      const found = (res.data || []).find((e) => e.date.split("T")[0] === date);
+      setCalendarStatus(found ? found.status : "WORKING");
+      setCalendarEntryId(found ? found.calendarId : null);
+    } catch { setCalendarStatus(null); setCalendarEntryId(null); }
   };
 
   const fetchAttendanceForPeriod = async () => {
     if (!selectedClassId || !selectedSubjectId || !selectedDate || !selectedPeriod) {
-      setStudents([]);
-      setAttendanceMap({});
-      setAlreadyMarked({});
-      return;
+      setStudents([]); setAttendanceMap({}); setAlreadyMarked({}); return;
     }
-
     setLoading(true);
-    setStudentFetchError("");
     try {
       await checkCalendarForDate(selectedDate);
       const enrollRes = await getAllEnrollments();
-      const filtered = (enrollRes.data || []).filter(
-        (en) => en.classroomId === selectedClassId
-      );
-
-      const studentList = filtered.map((s) => ({
-        studentId: s.studentId,
-        name: s.studentName,
-      }));
+      const studentList = (enrollRes.data || []).filter(en => en.classroomId === selectedClassId)
+         .map(s => ({ studentId: s.studentId, name: s.studentName }));
+      
       setStudents(studentList);
-
-      const attRes = await getAttendanceByClassDatePeriod(
-        selectedClassId,
-        selectedSubjectId,
-        selectedDate,
-        selectedPeriod
-      );
+      const attRes = await getAttendanceByClassDatePeriod(selectedClassId, selectedSubjectId, selectedDate, selectedPeriod);
       const existing = attRes.data || [];
-      const map = {};
-      const markers = {};
-
-      studentList.forEach((stu) => {
-        const match = existing.find((a) => a.studentId === stu.studentId);
+      const map = {}; const markers = {};
+      
+      studentList.forEach(stu => {
+        const match = existing.find(a => a.studentId === stu.studentId);
         if (match) {
-          map[stu.studentId] = {
-            status: match.status === "ABSENT" ? "ABSENT" : "PRESENT",
-            attendanceId: match.attendanceId,
-          };
+          map[stu.studentId] = { status: match.status === "ABSENT" ? "ABSENT" : "PRESENT", attendanceId: match.attendanceId };
           markers[stu.studentId] = true;
-        } else {
-          map[stu.studentId] = { status: "PRESENT", attendanceId: null };
-        }
+        } else map[stu.studentId] = { status: "PRESENT", attendanceId: null };
       });
-
       setAttendanceMap(map);
       setAlreadyMarked(markers);
       setSelectAll(studentList.length > 0 && studentList.every(s => map[s.studentId].status === "PRESENT"));
-    } catch (err) {
-      console.error("Fetch attendance error", err);
-      setStudentFetchError("Failed to fetch students/attendance");
-      setStudents([]);
-      setAttendanceMap({});
-      setAlreadyMarked({});
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) {
+      console.error(e);
+      setStudents([]); setAttendanceMap({}); setAlreadyMarked({});
+    } finally { setLoading(false); }
   };
 
   useEffect(() => {
@@ -176,14 +111,9 @@ const Attendance = ({ isTeacher = false }) => {
   }, [selectedClassId, selectedSubjectId, selectedDate, selectedPeriod]);
 
   const setStudentStatus = (studentId, status) => {
-    setAttendanceMap((prev) => {
-      const next = {
-        ...prev,
-        [studentId]: { ...(prev[studentId] || {}), status },
-      };
-      setSelectAll(
-        students.length > 0 && students.every(s => next[s.studentId]?.status === "PRESENT")
-      );
+    setAttendanceMap(p => {
+      const next = { ...p, [studentId]: { ...p[studentId], status } };
+      setSelectAll(students.every(s => next[s.studentId]?.status === "PRESENT"));
       return next;
     });
   };
@@ -191,302 +121,165 @@ const Attendance = ({ isTeacher = false }) => {
   const toggleSelectAll = () => {
     const newVal = !selectAll;
     setSelectAll(newVal);
-    setAttendanceMap((prev) => {
-      const copy = { ...prev };
-      students.forEach((s) => {
-        copy[s.studentId] = { ...(copy[s.studentId] || {}), status: newVal ? "PRESENT" : "ABSENT" };
-      });
+    setAttendanceMap(p => {
+      const copy = { ...p };
+      students.forEach(s => { copy[s.studentId] = { ...copy[s.studentId], status: newVal ? "PRESENT" : "ABSENT" }; });
       return copy;
     });
   };
 
   const submitAttendanceHandler = async () => {
-    if (!selectedClassId || !selectedSubjectId || !selectedDate || !selectedPeriod) {
-      alert("Please select Class, Subject, Date and Period");
-      return;
-    }
-
+    if (!selectedClassId || !selectedSubjectId || !selectedDate || !selectedPeriod) return alert("Select Class, Subject, Date, Period");
     setLoading(true);
     try {
-      const ops = students.map((stu) => {
+      const ops = students.map(stu => {
         const info = attendanceMap[stu.studentId] || { status: "PRESENT", attendanceId: null };
-        const payload = {
-          studentId: stu.studentId,
-          classroomId: selectedClassId,
-          subjectId: selectedSubjectId,
-          calendarId: calendarEntryId,
-          date: selectedDate,
-          periodNumber: selectedPeriod,
-          status: info.status,
-        };
-        return info.attendanceId
-          ? updateAttendance(info.attendanceId, payload)
-          : createAttendance(payload);
+        const payload = { studentId: stu.studentId, classroomId: selectedClassId, subjectId: selectedSubjectId, calendarId: calendarEntryId, date: selectedDate, periodNumber: selectedPeriod, status: info.status };
+        return info.attendanceId ? updateAttendance(info.attendanceId, payload) : createAttendance(payload);
       });
-
       await Promise.all(ops);
       await fetchAttendanceForPeriod();
-      alert("Attendance saved successfully");
-    } catch (err) {
-      console.error("Save attendance error", err);
-      alert("Failed to save attendance");
-    } finally {
-      setLoading(false);
-    }
+      alert("Attendance synchronized.");
+    } catch (e) { console.error(e); alert("Failed to save."); } finally { setLoading(false); }
   };
 
   const handleDelete = async (studentId) => {
     const info = attendanceMap[studentId];
     if (!info?.attendanceId) return;
-
-    if (!window.confirm("Delete this attendance record?")) return;
-
+    if (!window.confirm("Clear record?")) return;
     setLoading(true);
-    try {
-      await deleteAttendance(info.attendanceId);
-      await fetchAttendanceForPeriod();
-    } catch (err) {
-      console.error("Delete attendance error", err);
-      alert("Delete failed");
-    } finally {
-      setLoading(false);
-    }
+    try { await deleteAttendance(info.attendanceId); await fetchAttendanceForPeriod(); } 
+    catch { alert("Delete failed"); } finally { setLoading(false); }
   };
 
   const presentCount = students.filter((s) => attendanceMap[s.studentId]?.status === "PRESENT").length;
   const absentCount = students.filter((s) => attendanceMap[s.studentId]?.status === "ABSENT").length;
 
-  const subjectNameFromId = (id) => {
-    const cs = classSubjects.find((c) => c.subjectId === id);
-    return cs?.subjectName || "";
-  };
-
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>Attendance Management</h1>
-        <p style={styles.subtitle}>Track and record student presence across classes</p>
+    <div style={{ maxWidth: 1200, margin: "0 auto", paddingBottom: 40 }}>
+      {/* Header */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:32 }}>
+        <div>
+          <h1 style={{ fontSize:32, fontWeight:900, color:"var(--text-primary)", letterSpacing:"-0.03em", margin:"0 0 6px", fontFamily:"'Outfit', sans-serif" }}>Attendance Directory</h1>
+          <p style={{ margin:0, fontSize:14, color:"var(--text-secondary)", fontWeight:500 }}>Track and record student presence automatically synced to the server.</p>
+        </div>
       </div>
 
-      <div className="grid-side-main" style={{alignItems: "start"}}>
-        <div style={styles.filterCol}>
-          <div className="premium-card" style={styles.filterCard}>
-            <h3 style={styles.sectionTitle}>
-              <FaFilter size={14} /> Attendance Filters
-            </h3>
-            <div style={styles.filterGroup}>
-              <label style={styles.label}>Academic Class</label>
-              <select
-                className="modern-input"
-                value={selectedClassId || ""}
-                onChange={(e) => {
-                  const val = e.target.value ? Number(e.target.value) : null;
-                  setSelectedClassId(val);
-                  setSelectedSubjectId(null);
-                  setSelectedDate("");
-                  setSelectedPeriod(null);
-                  setStudents([]);
-                  setAttendanceMap({});
-                  setAlreadyMarked({});
-                }}
-              >
-                <option value="">-- Choose Class --</option>
-                {classrooms.map((c) => (
-                  <option key={c.classId} value={c.classId}>
-                    {c.name} {c.section ? `- ${c.section}` : ""}
-                  </option>
-                ))}
-              </select>
+      <div style={{ display:"grid", gridTemplateColumns:"320px 1fr", gap:28, alignItems:"start" }}>
+        
+        {/* Left Column (Filters) */}
+        <div style={{ display:"flex", flexDirection:"column", gap:24 }}>
+          <div style={{ background:"var(--surface-1)", borderRadius:20, padding:24, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)" }}>
+            <h3 style={{ fontSize:14, fontWeight:800, color:"var(--text-primary)", textTransform:"uppercase", letterSpacing:"1px", margin:"0 0 20px" }}>Session Filter</h3>
+            
+            <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+              <div>
+                <label style={{ fontSize:12, fontWeight:700, color:"var(--text-secondary)", marginBottom:6, display:"block" }}>Academic Class</label>
+                <select className="form-input" style={{borderRadius:12}} value={selectedClassId||""} onChange={e=>{ setSelectedClassId(e.target.value?Number(e.target.value):null); setSelectedSubjectId(null); setSelectedDate(""); setSelectedPeriod(null); }}>
+                  <option value="">Choose Class</option>
+                  {classrooms.map(c => <option key={c.classId} value={c.classId}>{c.name} {c.section?`- ${c.section}`:""}</option>)}
+                </select>
+              </div>
+              
+              <div>
+                <label style={{ fontSize:12, fontWeight:700, color:"var(--text-secondary)", marginBottom:6, display:"block" }}>Subject</label>
+                <select className="form-input" style={{borderRadius:12}} value={selectedSubjectId||""} onChange={e=>{ setSelectedSubjectId(e.target.value?Number(e.target.value):null); setSelectedPeriod(null); }} disabled={!selectedClassId}>
+                  <option value="">Choose Subject</option>
+                  {classSubjectsForClass().map(cs => <option key={cs.id} value={cs.subjectId}>{cs.subjectName}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ fontSize:12, fontWeight:700, color:"var(--text-secondary)", marginBottom:6, display:"block" }}>Record Date</label>
+                <input type="date" className="form-input" style={{borderRadius:12}} value={selectedDate} onChange={e=>{ setSelectedDate(e.target.value); setSelectedPeriod(null); if(e.target.value) checkCalendarForDate(e.target.value); }} />
+              </div>
+
+              <div>
+                <label style={{ fontSize:12, fontWeight:700, color:"var(--text-secondary)", marginBottom:6, display:"block" }}>Period</label>
+                <select className="form-input" style={{borderRadius:12}} value={selectedPeriod||""} onChange={e=>setSelectedPeriod(Number(e.target.value))} disabled={!selectedSubjectId || !selectedDate}>
+                  <option value="">Choose Period</option>
+                  {availablePeriodsForSubject().map(p => <option key={p} value={p}>Period {p}</option>)}
+                </select>
+              </div>
             </div>
 
-            <div style={styles.filterGroup}>
-              <label style={styles.label}>Subject</label>
-              <select
-                className="modern-input"
-                value={selectedSubjectId || ""}
-                onChange={(e) => {
-                  const val = e.target.value ? Number(e.target.value) : null;
-                  setSelectedSubjectId(val);
-                  setSelectedPeriod(null);
-                }}
-                disabled={!selectedClassId}
-              >
-                <option value="">-- Choose Subject --</option>
-                {classSubjectsForClass().map((cs) => (
-                  <option key={cs.id} value={cs.subjectId}>
-                    {cs.subjectName}
-                  </option>
-                ))}
-              </select>
+            <div style={{ padding:"12px", background:"var(--surface-2)", borderRadius:12, marginTop:20, fontSize:12, color:"var(--text-secondary)", border:"1px solid var(--border-subtle)", display:"flex", justifyContent:"space-between", fontWeight:600 }}>
+              <span>School Day Status:</span>
+              <span style={{ color: calendarStatus==="WORKING"?"#10b981":(calendarStatus==="HOLIDAY"?"#ef4444":"#fb923c") }}>{calendarStatus || "Auto-detect"}</span>
             </div>
 
-            <div style={styles.filterGroup}>
-              <label style={styles.label}>Record Date</label>
-              <input
-                type="date"
-                className="modern-input"
-                value={selectedDate}
-                onChange={(e) => {
-                  setSelectedDate(e.target.value);
-                  setSelectedPeriod(null);
-                  if (e.target.value) checkCalendarForDate(e.target.value);
-                }}
-              />
-            </div>
-
-            <div style={styles.filterGroup}>
-              <label style={styles.label}>Academic Period</label>
-              <select
-                className="modern-input"
-                value={selectedPeriod || ""}
-                onChange={(e) => setSelectedPeriod(Number(e.target.value))}
-                disabled={!selectedSubjectId || !selectedDate}
-              >
-                <option value="">-- Choose Period --</option>
-                {availablePeriodsForSubject().map((p) => (
-                  <option key={p} value={p}>
-                    Period {p}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div style={styles.calendarInfo}>
-              <FaRegCalendarAlt size={12} />
-              <span>System Day: <strong>{calendarStatus || "Not Checked"}</strong></span>
-            </div>
-
-            <div style={styles.filterFooter}>
-              <button
-                className="modern-btn btn-primary"
-                style={{ flex: 1 }}
-                onClick={submitAttendanceHandler}
-                disabled={!students.length || loading}
-              >
-                {loading ? "Syncing..." : "Commit Record"}
-              </button>
-              <button
-                className="modern-btn btn-outline"
-                onClick={() => {
-                  setSelectedClassId(null);
-                  setSelectedSubjectId(null);
-                  setSelectedDate("");
-                  setSelectedPeriod(null);
-                  setStudents([]);
-                  setAttendanceMap({});
-                  setAlreadyMarked({});
-                }}
-              >
-                <FaUndo />
-              </button>
-            </div>
+            <button onClick={submitAttendanceHandler} disabled={!students.length || loading} style={{ width:"100%", padding:"12px", borderRadius:12, background:"linear-gradient(135deg, #3b82f6, #2563eb)", color:"white", border:"none", fontWeight:700, fontSize:14, marginTop:20, cursor:"pointer", transition:"all 0.2s", boxShadow:"0 4px 12px rgba(37,99,235,0.25)", opacity:!students.length || loading?0.6:1 }}>
+              {loading ? "Synchronizing…" : "Commit Register"}
+            </button>
           </div>
-
+          
           {students.length > 0 && (
-            <div className="premium-card" style={styles.summaryCard}>
-              <h3 style={styles.sectionTitle}><FaUsers /> Record Summary</h3>
-              <div style={styles.summaryStats}>
-                <div style={styles.statLine}>
-                  <span style={styles.statLabel}>Present</span>
-                  <span style={{ ...styles.statValue, color: "var(--success-color)" }}>{presentCount}</span>
-                </div>
-                <div style={styles.statLine}>
-                  <span style={styles.statLabel}>Absent</span>
-                  <span style={{ ...styles.statValue, color: "var(--error-color)" }}>{absentCount}</span>
-                </div>
-                <div style={styles.statLine}>
-                  <span style={styles.statLabel}>Total Cohort</span>
-                  <span style={styles.statValue}>{students.length}</span>
-                </div>
-                <div style={styles.progressBar}>
-                  <div style={{
-                    ...styles.progressFill,
-                    width: `${(presentCount / students.length) * 100}%`,
-                    backgroundColor: "var(--success-color)"
-                  }}></div>
-                </div>
+            <div style={{ background:"var(--surface-1)", borderRadius:20, padding:24, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)" }}>
+              <h3 style={{ fontSize:14, fontWeight:800, color:"var(--text-primary)", display:"flex", justifyContent:"space-between", alignItems:"center", margin:"0 0 16px" }}>
+                <span>Summary</span> <span style={{fontSize:12, backgroundColor:"var(--surface-2)", padding:"2px 8px", borderRadius:99}}>{students.length} Total</span>
+              </h3>
+              <div style={{ display:"flex", justifyContent:"space-around", textAlign:"center" }}>
+                <div><div style={{fontSize:24, fontWeight:900, color:"#10b981"}}>{presentCount}</div><div style={{fontSize:11, fontWeight:700, color:"var(--text-secondary)", textTransform:"uppercase"}}>Present</div></div>
+                <div><div style={{fontSize:24, fontWeight:900, color:"#ef4444"}}>{absentCount}</div><div style={{fontSize:11, fontWeight:700, color:"var(--text-secondary)", textTransform:"uppercase"}}>Absent</div></div>
               </div>
             </div>
           )}
         </div>
 
-        <div style={styles.contentCol}>
+        {/* Right Column (List) */}
+        <div>
           {!selectedClassId || !selectedSubjectId || !selectedDate || !selectedPeriod ? (
-            <div className="premium-card" style={styles.emptyState}>
-              <FaUserCheck size={48} style={{ opacity: 0.1, marginBottom: "20px" }} />
-              <h3>Ready to Mark</h3>
-              <p>Configure your filters on the left to load the pupil list for this session.</p>
+            <div style={{ background:"var(--surface-1)", border:"1px dashed var(--border-medium)", borderRadius:24, minHeight:400, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", color:"var(--text-tertiary)", textAlign:"center", padding:40 }}>
+              <div style={{ fontSize:48, marginBottom:16 }}>📋</div>
+              <h3 style={{ fontSize:18, fontWeight:700, margin:"0 0 8px", color:"var(--text-secondary)" }}>Waiting for configuration</h3>
+              <p style={{ fontSize:14, maxWidth:300, lineHeight:1.5, margin:0 }}>Select a class, subject, date and period on the left to load the attendance register.</p>
             </div>
           ) : (
-            <div className="premium-card" style={styles.listCard}>
-              <div style={styles.listHeader}>
+            <div style={{ background:"var(--surface-1)", borderRadius:24, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)", overflow:"hidden", animation:"pageEnter 0.4s ease-out" }}>
+              <div style={{ padding:"20px 24px", background:"var(--surface-2)", borderBottom:"1px solid var(--border-subtle)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                 <div>
-                  <h3 style={styles.listTitle}>
-                    {classrooms.find(c => c.classId === selectedClassId)?.name} • {subjectNameFromId(selectedSubjectId)}
-                  </h3>
-                  <p style={styles.listSubtitle}>Period {selectedPeriod} | {new Date(selectedDate).toLocaleDateString()}</p>
+                  <h2 style={{ fontSize:16, fontWeight:800, margin:0, color:"var(--text-primary)" }}>{classrooms.find(c=>c.classId===selectedClassId)?.name} • Period {selectedPeriod}</h2>
+                  <div style={{ fontSize:12, color:"var(--text-secondary)", fontWeight:600, marginTop:4 }}>{classSubjects.find(cs=>cs.subjectId===selectedSubjectId)?.subjectName} | {new Date(selectedDate).toDateString()}</div>
                 </div>
-                <div style={styles.headerActions}>
-                  <label style={styles.checkAllLabel}>
-                    <input
-                      type="checkbox"
-                      checked={selectAll}
-                      onChange={toggleSelectAll}
-                    />
-                    <span>Mark All Present</span>
-                  </label>
-                </div>
+                <label style={{ display:"flex", alignItems:"center", gap:8, fontSize:13, fontWeight:700, color:"var(--primary-color)", cursor:"pointer", padding:"8px 12px", background:"rgba(59,130,246,0.1)", borderRadius:99, border:"1px solid rgba(59,130,246,0.2)" }}>
+                  <input type="checkbox" checked={selectAll} onChange={toggleSelectAll} style={{accentColor:"var(--primary-color)", width:16, height:16, cursor:"pointer"}} /> Mark All Present
+                </label>
               </div>
 
-              <div style={styles.tableWrapper}>
-                <table style={styles.table}>
+              <div style={{ overflowX:"auto" }}>
+                <table style={{ width:"100%", borderCollapse:"collapse" }}>
                   <thead>
                     <tr>
-                      <th style={styles.th}>#</th>
-                      <th style={styles.th}>Student Name</th>
-                      <th style={styles.th}>Presence Status</th>
-                      <th style={styles.th}>Actions</th>
+                      <th style={{ textAlign:"left", padding:"14px 24px", fontSize:12, fontWeight:800, color:"var(--text-tertiary)", textTransform:"uppercase", letterSpacing:"0.5px", borderBottom:"1px solid var(--border-subtle)" }}>Student</th>
+                      <th style={{ textAlign:"left", padding:"14px 24px", fontSize:12, fontWeight:800, color:"var(--text-tertiary)", textTransform:"uppercase", letterSpacing:"0.5px", borderBottom:"1px solid var(--border-subtle)" }}>Status</th>
+                      <th style={{ textAlign:"right", padding:"14px 24px", fontSize:12, fontWeight:800, color:"var(--text-tertiary)", textTransform:"uppercase", letterSpacing:"0.5px", borderBottom:"1px solid var(--border-subtle)" }}>Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {students.map((stu, idx) => {
+                    {students.map((stu) => {
                       const info = attendanceMap[stu.studentId] || { status: "PRESENT", attendanceId: null };
+                      const isPresent = info.status === "PRESENT";
                       return (
-                        <tr key={stu.studentId} style={{
-                          ...styles.tr,
-                          backgroundColor: info.status === "ABSENT" ? "rgba(239, 68, 68, 0.03)" : "transparent"
-                        }}>
-                          <td style={styles.td}>{idx + 1}</td>
-                          <td style={styles.td}>
-                            <div style={styles.studentCell}>
-                              <div style={styles.avatarMini}>{stu.name.charAt(0)}</div>
-                              <span style={styles.name}>{stu.name}</span>
-                              {alreadyMarked[stu.studentId] && <FaCheckCircle style={styles.savedIcon} title="Already synchronized" />}
+                        <tr key={stu.studentId} style={{ borderBottom:"1px solid var(--border-subtle)", background: isPresent ? "transparent" : "rgba(239,68,68,0.03)", transition:"all 0.2s" }}>
+                          <td style={{ padding:"16px 24px" }}>
+                            <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                              <div style={{ width:32, height:32, borderRadius:10, background:"var(--surface-2)", border:"1px solid var(--border-light)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:800, color:"var(--text-secondary)" }}>{stu.name.charAt(0)}</div>
+                              <div>
+                                <div style={{ fontSize:14, fontWeight:700, color:"var(--text-primary)" }}>{stu.name}</div>
+                                {alreadyMarked[stu.studentId] && <div style={{ fontSize:10.5, fontWeight:700, color:"#10b981", marginTop:2 }}>✓ Synced to Server</div>}
+                              </div>
                             </div>
                           </td>
-                          <td style={styles.td}>
-                            <select
-                              style={{
-                                ...styles.statusSelect,
-                                color: info.status === "PRESENT" ? "var(--success-color)" : "var(--error-color)"
-                              }}
-                              value={info.status}
-                              onChange={(e) => setStudentStatus(stu.studentId, e.target.value)}
-                            >
-                              <option value="PRESENT">Present</option>
-                              <option value="ABSENT">Absent</option>
-                            </select>
+                          <td style={{ padding:"16px 24px" }}>
+                            <div style={{ display:"inline-flex", background:"var(--surface-2)", borderRadius:99, border:"1px solid var(--border-subtle)", padding:"2px", gap:2 }}>
+                              <button onClick={()=>setStudentStatus(stu.studentId, "PRESENT")} style={{ padding:"6px 16px", borderRadius:99, fontSize:12, fontWeight:700, border:"none", cursor:"pointer", transition:"all 0.2s", background: isPresent?"#10b981":"transparent", color: isPresent?"white":"var(--text-secondary)", boxShadow: isPresent?"0 2px 8px rgba(16,185,129,0.3)":"none" }}>Present</button>
+                              <button onClick={()=>setStudentStatus(stu.studentId, "ABSENT")} style={{ padding:"6px 16px", borderRadius:99, fontSize:12, fontWeight:700, border:"none", cursor:"pointer", transition:"all 0.2s", background: !isPresent?"#ef4444":"transparent", color: !isPresent?"white":"var(--text-secondary)", boxShadow: !isPresent?"0 2px 8px rgba(239,68,68,0.3)":"none" }}>Absent</button>
+                            </div>
                           </td>
-                          <td style={styles.td}>
-                            {info.attendanceId && (
-                              <button
-                                style={styles.deleteBtn}
-                                onClick={() => handleDelete(stu.studentId)}
-                                title="Clear record"
-                              >
-                                <FaTrash size={12} />
-                              </button>
-                            )}
+                          <td style={{ padding:"16px 24px", textAlign:"right" }}>
+                            {info.attendanceId ? (
+                              <button onClick={()=>handleDelete(stu.studentId)} style={{ width:32, height:32, borderRadius:8, border:"none", background:"rgba(239,68,68,0.1)", color:"#ef4444", cursor:"pointer", display:"inline-flex", alignItems:"center", justifyContent:"center", transition:"all 0.2s" }} title="Remove Record">✕</button>
+                            ) : <span style={{fontSize:12, color:"var(--text-tertiary)", fontWeight:500}}>Unsaved</span>}
                           </td>
                         </tr>
                       );
@@ -500,226 +293,6 @@ const Attendance = ({ isTeacher = false }) => {
       </div>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    maxWidth: "1100px",
-    margin: "0 auto",
-  },
-  header: {
-    marginBottom: "32px",
-  },
-  title: {
-    fontSize: "28px",
-    fontWeight: "700",
-    marginBottom: "4px",
-  },
-  subtitle: {
-    color: "var(--text-muted)",
-    fontSize: "14px",
-  },
-  subtitle: {
-    color: "var(--text-muted)",
-    fontSize: "14px",
-  },
-  filterCol: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "24px",
-  },
-  filterCard: {
-    padding: "24px",
-  },
-  sectionTitle: {
-    fontSize: "16px",
-    fontWeight: "700",
-    marginBottom: "20px",
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    color: "var(--text-primary)",
-    borderBottom: "1px solid var(--border-color)",
-    paddingBottom: "12px",
-  },
-  filterGroup: {
-    marginBottom: "16px",
-  },
-  label: {
-    display: "block",
-    fontSize: "12px",
-    fontWeight: "600",
-    color: "var(--text-muted)",
-    marginBottom: "6px",
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-  },
-  calendarInfo: {
-    fontSize: "12px",
-    color: "var(--text-muted)",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    padding: "12px",
-    backgroundColor: "var(--background-color)",
-    borderRadius: "8px",
-    marginBottom: "20px",
-  },
-  filterFooter: {
-    display: "flex",
-    gap: "10px",
-  },
-  summaryCard: {
-    padding: "20px",
-  },
-  summaryStats: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-  },
-  statLine: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  statLabel: {
-    fontSize: "14px",
-    color: "var(--text-secondary)",
-  },
-  statValue: {
-    fontSize: "16px",
-    fontWeight: "700",
-  },
-  progressBar: {
-    height: "6px",
-    backgroundColor: "var(--border-color)",
-    borderRadius: "3px",
-    overflow: "hidden",
-    marginTop: "8px",
-  },
-  progressFill: {
-    height: "100%",
-    transition: "width 0.3s ease",
-  },
-  contentCol: {
-    minWidth: 0,
-  },
-  emptyState: {
-    padding: "80px 40px",
-    textAlign: "center",
-    color: "var(--text-muted)",
-  },
-  listCard: {
-    padding: "0",
-    overflow: "hidden",
-  },
-  listHeader: {
-    padding: "24px",
-    borderBottom: "1px solid var(--border-color)",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.01)",
-  },
-  listTitle: {
-    margin: 0,
-    fontSize: "18px",
-    fontWeight: "700",
-  },
-  listSubtitle: {
-    margin: "4px 0 0 0",
-    fontSize: "13px",
-    color: "var(--text-muted)",
-  },
-  headerActions: {
-    display: "flex",
-    alignItems: "center",
-  },
-  checkAllLabel: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    fontSize: "13px",
-    fontWeight: "600",
-    color: "var(--primary-color)",
-    cursor: "pointer",
-    padding: "8px 12px",
-    borderRadius: "6px",
-    backgroundColor: "rgba(30, 136, 229, 0.05)",
-  },
-  tableWrapper: {
-    overflowX: "auto",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-  },
-  th: {
-    textAlign: "left",
-    padding: "14px 24px",
-    fontSize: "13px",
-    fontWeight: "600",
-    color: "var(--text-muted)",
-    backgroundColor: "var(--background-color)",
-    borderBottom: "1px solid var(--border-color)",
-  },
-  tr: {
-    borderBottom: "1px solid var(--border-color)",
-    transition: "background-color 0.2s",
-  },
-  td: {
-    padding: "14px 24px",
-    fontSize: "14px",
-    verticalAlign: "middle",
-  },
-  studentCell: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-  },
-  avatarMini: {
-    width: "28px",
-    height: "28px",
-    borderRadius: "50%",
-    backgroundColor: "var(--border-color)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "12px",
-    fontWeight: "700",
-    color: "var(--text-secondary)",
-  },
-  name: {
-    fontWeight: "500",
-    color: "var(--text-primary)",
-  },
-  savedIcon: {
-    color: "var(--success-color)",
-    fontSize: "12px",
-  },
-  statusSelect: {
-    padding: "6px 12px",
-    borderRadius: "6px",
-    border: "1px solid var(--border-color)",
-    backgroundColor: "white",
-    fontSize: "13px",
-    fontWeight: "600",
-    cursor: "pointer",
-    outline: "none",
-  },
-  deleteBtn: {
-    width: "28px",
-    height: "28px",
-    borderRadius: "50%",
-    border: "none",
-    backgroundColor: "rgba(239, 68, 68, 0.1)",
-    color: "var(--error-color)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    transition: "all 0.2s",
-  }
 };
 
 export default Attendance;

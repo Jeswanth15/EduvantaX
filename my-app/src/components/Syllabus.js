@@ -1,17 +1,7 @@
-// src/components/Syllabus.js
 import React, { useEffect, useState } from "react";
-import {
-  getAllClassSubjects,
-  getSyllabusByClassSubject,
-  createOrUpdateSyllabus,
-  deleteSyllabus,
-} from "../utils/api";
+import { getAllClassSubjects, getSyllabusByClassSubject, createOrUpdateSyllabus, deleteSyllabus } from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import { getDecodedToken } from "../utils/authHelper";
-import {
-  FaFileUpload, FaBook, FaTrash, FaExternalLinkAlt, FaClock,
-  FaFilePdf, FaFilePowerpoint, FaFileWord, FaLink, FaFolderOpen
-} from "react-icons/fa";
 
 const Syllabus = () => {
   const decoded = getDecodedToken();
@@ -23,93 +13,61 @@ const Syllabus = () => {
   const [selectedId, setSelectedId] = useState(null);
   const [syllabusList, setSyllabusList] = useState([]);
   const [loading, setLoading] = useState(true);
+  
   const [expandedModule, setExpandedModule] = useState(null);
-  const [historyData, setHistoryData] = useState([]);
-  const [showHistory, setShowHistory] = useState(false);
   const [studyPlan, setStudyPlan] = useState(null);
   const [loadingPlan, setLoadingPlan] = useState(false);
   const [selectedModule, setSelectedModule] = useState("General");
   const [selectedDays, setSelectedDays] = useState(7);
+  
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    moduleName: "",
-    fileLink: "",
-  });
+  const [formData, setFormData] = useState({ title: "", description: "", moduleName: "" });
   const [file, setFile] = useState(null);
 
   useEffect(() => {
-    fetchClassSubjects();
-  }, []);
-
-  const fetchClassSubjects = async () => {
-    try {
+    const fetchClassSubjects = async () => {
       setLoading(true);
-      const res = await getAllClassSubjects();
-      let all = res.data || [];
-
-      if (role === "TEACHER") {
-        all = all.filter((cs) => cs.teacherId === userId);
-      } else if (role === "STUDENT") {
-        all = all.filter((cs) => cs.classroomId === classroomId);
-      }
-
-      setClassSubjects(all);
-    } catch (err) {
-      console.error("Error fetching class-subjects:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        const res = await getAllClassSubjects();
+        let all = res.data || [];
+        if (role === "TEACHER") all = all.filter(cs => cs.teacherId === userId);
+        else if (role === "STUDENT") all = all.filter(cs => cs.classroomId === classroomId);
+        setClassSubjects(all);
+      } catch (err) { console.error(err); } finally { setLoading(false); }
+    };
+    fetchClassSubjects();
+  }, [role, userId, classroomId]);
 
   const fetchSyllabus = async (id) => {
     try {
       const res = await getSyllabusByClassSubject(id);
       setSyllabusList(res.data || []);
       setSelectedId(id);
-      setStudyPlan(null); // Reset study plan when switching class
-    } catch (err) {
-      console.error("Error fetching syllabus:", err);
-    }
+      setStudyPlan(null);
+    } catch (err) { console.error(err); }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedId) return alert("Select a class & subject first");
-
     const data = new FormData();
     data.append("classSubjectId", selectedId);
     data.append("title", formData.title);
     data.append("description", formData.description);
     data.append("moduleName", formData.moduleName || "General Resources");
     data.append("uploadedById", userId);
-
-    if (file) {
-      data.append("file", file);
-    }
+    if (file) data.append("file", file);
 
     try {
       await createOrUpdateSyllabus(data);
       fetchSyllabus(selectedId);
-      setFormData({ title: "", description: "", moduleName: "", fileLink: "" });
-      setFile(null);
-      const fileInput = document.getElementById("syllabus-file-input");
-      if (fileInput) fileInput.value = "";
-    } catch (err) {
-      console.error(err);
-      alert("Failed to upload syllabus");
-    }
+      setFormData({ title: "", description: "", moduleName: "" }); setFile(null);
+    } catch (err) { alert("Failed to upload syllabus"); }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this syllabus?")) return;
-    try {
-      await deleteSyllabus(id);
-      fetchSyllabus(selectedId);
-    } catch (err) {
-      console.error(err);
-    }
+    try { await deleteSyllabus(id); fetchSyllabus(selectedId); } catch (err) { console.error(err); }
   };
 
   const groupedSyllabus = syllabusList.reduce((acc, current) => {
@@ -119,502 +77,168 @@ const Syllabus = () => {
     return acc;
   }, {});
 
-  const handleStartTest = async (moduleText, classSubjectId, moduleName) => {
-      // Gather all text from the files. We can pass the file contents to the backend.
-      // Or better yet, tell the practice component the context
-      navigate('/student/practice', { state: { classSubjectId, moduleName, files: groupedSyllabus[moduleName] } });
-  };
-
-  const handleViewMarks = async (classSubjectId, moduleName) => {
-      try {
-          const res = await fetch(`http://localhost:8080/api/practice/module/${classSubjectId}/${moduleName}?userId=${userId}`, {
-              headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-          });
-          const data = await res.json();
-          setHistoryData(data);
-          setShowHistory(true);
-      } catch (err) {
-          console.error(err);
-      }
+  const handleStartTest = (moduleName) => {
+    navigate('/student/practice', { state: { classSubjectId: selectedId, moduleName, files: groupedSyllabus[moduleName] } });
   };
 
   const handleGenerateStudyPlan = async () => {
-      setLoadingPlan(true);
-      try {
-          const moduleParam = selectedModule !== "General" ? `&moduleName=${encodeURIComponent(selectedModule)}` : "";
-          const res = await fetch(`http://localhost:8080/api/practice/study-plan/${userId}/${selectedId}?days=${selectedDays}${moduleParam}`, {
-              headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-          });
-          const text = await res.text();
-          setStudyPlan(text);
-      } catch (err) {
-          console.error(err);
-          setStudyPlan("Failed to generate plan securely. Try again later.");
-      } finally {
-          setLoadingPlan(false);
-      }
+    setLoadingPlan(true);
+    try {
+      const moduleParam = selectedModule !== "General" ? `&moduleName=${encodeURIComponent(selectedModule)}` : "";
+      const res = await fetch(`http://localhost:8080/api/practice/study-plan/${userId}/${selectedId}?days=${selectedDays}${moduleParam}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      const text = await res.text();
+      setStudyPlan(text);
+    } catch { setStudyPlan("Failed to generate plan securely."); } finally { setLoadingPlan(false); }
   };
 
-  const getFileIcon = (url) => {
-    if (!url) return <FaLink />;
-    const lowerUrl = url.toLowerCase();
-    if (lowerUrl.endsWith(".pdf")) return <FaFilePdf style={{ color: "#ef4444" }} />;
-    if (lowerUrl.endsWith(".ppt") || lowerUrl.endsWith(".pptx")) return <FaFilePowerpoint style={{ color: "#f59e0b" }} />;
-    if (lowerUrl.endsWith(".doc") || lowerUrl.endsWith(".docx")) return <FaFileWord style={{ color: "#3b82f6" }} />;
-    return <FaLink style={{ color: "var(--accent-color)" }} />;
-  };
+  const getFullFileUrl = (url) => url ? (url.startsWith("http") ? url : `http://localhost:8080${url}`) : "#";
 
-  const getFullFileUrl = (url) => {
-    if (!url) return "#";
-    if (url.startsWith("http")) return url;
-    return `http://localhost:8080${url}`;
-  };
-
-  if (loading && classSubjects.length === 0) {
-    return (
-      <div style={styles.loaderContainer}>
-        <div className="spinner"></div>
-        <p style={{ marginTop: "20px", color: "var(--text-secondary)", fontWeight: "500" }}>
-          Indexing curriculum resources...
-        </p>
-      </div>
-    );
-  }
+  if (loading && !classSubjects.length) return <div style={{textAlign:"center", padding:100}}>Loading curriculum...</div>;
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>Syllabus & Resources</h1>
-        <p style={styles.subtitle}>Curated learning materials for your active classes</p>
+    <div style={{ maxWidth: 1200, margin: "0 auto", paddingBottom: 40 }}>
+      {/* Header */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:32 }}>
+        <div>
+          <h1 style={{ fontSize:32, fontWeight:900, color:"var(--text-primary)", letterSpacing:"-0.03em", margin:"0 0 6px", fontFamily:"'Outfit', sans-serif" }}>Syllabus & Material</h1>
+          <p style={{ margin:0, fontSize:14, color:"var(--text-secondary)", fontWeight:500 }}>Access modules, files and course outlines.</p>
+        </div>
       </div>
 
-      {/* CLASS SELECTOR */}
-      <div style={styles.selectorWrapper}>
-        {classSubjects.length === 0 ? (
-          <div className="premium-card" style={styles.empty}>No classes assigned to you.</div>
-        ) : (
-          <div style={styles.chipGrid}>
-            {classSubjects.map((cs) => (
-              <div
-                key={cs.id}
-                style={{
-                  ...styles.chip,
-                  borderColor: selectedId === cs.id ? "var(--primary-color)" : "var(--border-color)",
-                  backgroundColor: selectedId === cs.id ? "rgba(30, 136, 229, 0.05)" : "var(--surface-color)",
-                }}
-                onClick={() => fetchSyllabus(cs.id)}
-              >
-                <div style={styles.chipIcon}><FaBook /></div>
-                <div style={styles.chipText}>
-                  <div style={{ fontWeight: "700", color: selectedId === cs.id ? "var(--primary-color)" : "var(--text-primary)" }}>
-                    {cs.classroomName || cs.classroom?.name}
+      <div style={{ display:"grid", gridTemplateColumns:"340px 1fr", gap:28, alignItems:"start" }}>
+        
+        {/* Left Col */}
+        <div style={{ display:"flex", flexDirection:"column", gap:20, position:"sticky", top:20 }}>
+          <div style={{ background:"var(--surface-1)", borderRadius:20, padding:24, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)" }}>
+            <h3 style={{ fontSize:14, fontWeight:800, color:"var(--text-primary)", textTransform:"uppercase", letterSpacing:"1px", margin:"0 0 20px" }}>Course Selector</h3>
+            {classSubjects.length === 0 ? <div style={{padding:20, textAlign:"center", color:"var(--text-secondary)"}}>No classes assigned.</div> : (
+              <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                {classSubjects.map(cs => (
+                  <div key={cs.id} onClick={() => fetchSyllabus(cs.id)} style={{ padding:"14px 16px", borderRadius:12, border: selectedId===cs.id ? "1px solid var(--primary-color)" : "1px solid var(--border-light)", background: selectedId===cs.id ? "rgba(37,99,235,0.05)" : "var(--surface-2)", cursor:"pointer", transition:"all 0.2s" }} onMouseEnter={e=>{if(selectedId!==cs.id)e.currentTarget.style.background="var(--surface-3)"}} onMouseLeave={e=>{if(selectedId!==cs.id)e.currentTarget.style.background="var(--surface-2)"}}>
+                     <div style={{ fontWeight:800, fontSize:14, color:selectedId===cs.id?"var(--primary-color)":"var(--text-primary)" }}>{cs.classroomName || cs.classroom?.name}</div>
+                     <div style={{ fontSize:12, fontWeight:600, color:"var(--text-secondary)", marginTop:4 }}>{cs.subjectName || cs.subject?.name}</div>
                   </div>
-                  <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                    {cs.subjectName || cs.subject?.name}
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        )}
-      </div>
 
-      <div style={styles.mainGrid}>
-        {/* UPLOAD FORM (TEACHER/ADMIN ONLY) */}
-        {selectedId && role !== "STUDENT" && (
-          <div className="premium-card" style={styles.formCard}>
-            <h3 style={styles.sectionTitle}><FaFileUpload size={14} /> Add New Material</h3>
-            <form onSubmit={handleSubmit} style={styles.form}>
-              <div style={styles.formRow}>
-                <input
-                  className="modern-input"
-                  placeholder="Module Name (e.g. Unit 1: Physics Intro)"
-                  value={formData.moduleName}
-                  onChange={(e) => setFormData({ ...formData, moduleName: e.target.value })}
-                />
-                <input
-                  className="modern-input"
-                  placeholder="Resource Title"
-                  value={formData.title}
-                  required
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                />
-              </div>
-              <textarea
-                className="modern-input"
-                placeholder="Instructions or description for students..."
-                rows={3}
-                style={{ resize: "none" }}
-                value={formData.description}
-                required
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-              <div style={styles.formFooter}>
-                <div style={styles.fileUpload}>
-                  <input
-                    type="file"
-                    id="syllabus-file-input"
-                    style={{ display: "none" }}
-                    onChange={(e) => setFile(e.target.files[0])}
-                    accept=".pdf,.ppt,.pptx,.doc,.docx"
-                  />
-                  <label htmlFor="syllabus-file-input" className="modern-btn btn-outline" style={{ margin: 0, cursor: "pointer" }}>
-                    {file ? `Selected: ${file.name.substring(0, 15)}...` : "Choose File (PDF/PPT)"}
-                  </label>
-                </div>
-                <button type="submit" className="modern-btn btn-primary">
-                  Upload & Post
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* AI STUDY PLAN (STUDENT ONLY) */}
-        {selectedId && role === "STUDENT" && (
-            <div className="premium-card" style={{ marginBottom: "24px", background: "linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%)", borderColor: "#bae6fd" }}>
-               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
-                  <h3 style={{ margin: 0, color: "var(--primary-color)", display: 'flex', alignItems: 'center', gap: '8px' }}>
-                     ✨ Personalized AI Study Plan
-                  </h3>
-                  
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <label style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Module</label>
-                      <select 
-                        className="modern-input" 
-                        style={{ padding: '6px 12px', height: '36px', minWidth: '140px' }}
-                        value={selectedModule}
-                        onChange={(e) => setSelectedModule(e.target.value)}
-                      >
-                        <option value="General">All Modules</option>
-                        {Object.keys(groupedSyllabus).map(m => (
-                          <option key={m} value={m}>{m}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <label style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Duration</label>
-                      <select 
-                        className="modern-input" 
-                        style={{ padding: '6px 12px', height: '36px', minWidth: '80px' }}
-                        value={selectedDays}
-                        onChange={(e) => setSelectedDays(parseInt(e.target.value))}
-                      >
-                        <option value={3}>3 Days</option>
-                        <option value={5}>5 Days</option>
-                        <option value={7}>7 Days</option>
-                        <option value={10}>10 Days</option>
-                      </select>
-                    </div>
-
-                    <button className="modern-btn btn-primary" onClick={handleGenerateStudyPlan} disabled={loadingPlan} style={{ alignSelf: 'flex-end', height: '36px' }}>
-                        {loadingPlan ? "Generating..." : "Generate Plan"}
-                    </button>
-                  </div>
-               </div>
-               {studyPlan && (
-                  <div style={{ padding: "16px", backgroundColor: "white", borderRadius: "8px", border: "1px solid #bae6fd", fontSize: '15px', color: '#334155', lineHeight: '1.6' }}>
-                      {studyPlan}
-                  </div>
-               )}
+          {selectedId && role !== "STUDENT" && (
+            <div style={{ background:"var(--surface-1)", borderRadius:20, padding:24, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)" }}>
+               <h3 style={{ fontSize:15, fontWeight:800, color:"var(--text-primary)", margin:"0 0 20px" }}>Upload Material</h3>
+               <form onSubmit={handleSubmit} style={{ display:"flex", flexDirection:"column", gap:16 }}>
+                 <div>
+                    <label style={{ fontSize:12, fontWeight:700, color:"var(--text-secondary)", marginBottom:6, display:"block" }}>Module / Unit</label>
+                    <input className="form-input" placeholder="e.g. Unit 1" value={formData.moduleName} onChange={e=>setFormData({...formData, moduleName:e.target.value})} style={{borderRadius:10}} />
+                 </div>
+                 <div>
+                    <label style={{ fontSize:12, fontWeight:700, color:"var(--text-secondary)", marginBottom:6, display:"block" }}>File Title</label>
+                    <input className="form-input" placeholder="e.g. Intro Slides" value={formData.title} onChange={e=>setFormData({...formData, title:e.target.value})} required style={{borderRadius:10}} />
+                 </div>
+                 <div>
+                    <label style={{ fontSize:12, fontWeight:700, color:"var(--text-secondary)", marginBottom:6, display:"block" }}>Description</label>
+                    <textarea className="form-input" placeholder="Instructions..." value={formData.description} onChange={e=>setFormData({...formData, description:e.target.value})} required style={{borderRadius:10, resize:"none"}} rows={2} />
+                 </div>
+                 
+                 <div style={{ border:"1px dashed var(--border-medium)", background:"var(--surface-2)", borderRadius:12, padding:12, textAlign:"center" }}>
+                    <input type="file" id="a-file" style={{display:"none"}} onChange={e=>setFile(e.target.files[0])} />
+                    <label htmlFor="a-file" style={{ fontSize:13, fontWeight:600, color:"var(--primary-color)", cursor:"pointer", display:"block" }}>
+                      {file ? `📎 ${file.name.substring(0,25)}` : "📎 Attach File (.pdf, .ppt)"}
+                    </label>
+                 </div>
+                 <button type="submit" style={{ width:"100%", padding:"14px", borderRadius:12, background:"linear-gradient(135deg, #10b981, #059669)", color:"white", fontWeight:800, border:"none", cursor:"pointer", boxShadow:"0 4px 12px rgba(16,185,129,0.3)" }}>Post Material</button>
+               </form>
             </div>
-        )}
-
-        {/* MATERIALS LIST */}
-        <div style={styles.materialsList}>
-          {Object.keys(groupedSyllabus).length > 0 ? (
-            Object.keys(groupedSyllabus).map((module) => (
-              <div key={module} className="premium-card" style={styles.moduleSection}>
-                <div style={styles.moduleHeader} onClick={() => role === "STUDENT" ? setExpandedModule(expandedModule === module ? null : module) : null}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <FaFolderOpen size={24} style={{ color: "var(--primary-color)" }} />
-                    <span style={{ fontSize: '20px' }}>{module}</span>
-                  </div>
-                  {role === "STUDENT" && (
-                    <div style={styles.studentActionRow}>
-                      <button className="modern-btn btn-outline" onClick={(e) => { e.stopPropagation(); setExpandedModule(expandedModule === module ? null : module); }}>
-                         View Module
-                      </button>
-                      <button className="modern-btn btn-primary" onClick={(e) => { e.stopPropagation(); handleStartTest(groupedSyllabus[module].map(s => s.fileLink).join(','), selectedId, module); }}>
-                         Start Test
-                      </button>
-                      <button className="modern-btn btn-outline" onClick={(e) => { e.stopPropagation(); handleViewMarks(selectedId, module); }}>
-                         View Past Marks
-                      </button>
-                    </div>
-                  )}
-                </div>
-                {(role !== "STUDENT" || expandedModule === module) && (
-                  <div style={styles.itemsGrid}>
-                    {groupedSyllabus[module].map((s) => (
-                      <div key={s.syllabusId} style={styles.itemCard}>
-                        <div style={styles.itemTag}>
-                          <div style={styles.fileIcon}>{getFileIcon(s.fileLink)}</div>
-                        </div>
-                        <div style={styles.itemContent}>
-                          <div style={styles.itemTop}>
-                            <h4 style={styles.itemTitle}>{s.title}</h4>
-                            {role !== "STUDENT" && (
-                              <button
-                                style={styles.deleteBtn}
-                                onClick={() => handleDelete(s.syllabusId)}
-                              >
-                                <FaTrash size={12} />
-                              </button>
-                            )}
-                          </div>
-                          <p style={styles.itemDesc}>{s.description}</p>
-                          <div style={styles.itemFooter}>
-                            <a href={getFullFileUrl(s.fileLink)} target="_blank" rel="noreferrer" style={styles.downloadLink}>
-                              <FaExternalLinkAlt size={10} /> Open File
-                            </a>
-                            <div style={styles.itemDate}>
-                              <FaClock size={10} /> {new Date(s.uploadedAt).toLocaleDateString()}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))
-          ) : (
-            selectedId && (
-              <div className="premium-card" style={styles.empty}>
-                <FaFolderOpen size={30} style={{ opacity: 0.3, marginBottom: "12px" }} />
-                <p>No materials posted for this class yet.</p>
-              </div>
-            )
           )}
         </div>
-      </div>
 
-      {showHistory && (
-        <div style={styles.modalOverlay} onClick={() => setShowHistory(false)}>
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ marginTop: 0 }}>Past Marks</h3>
-            {historyData.length === 0 ? (
-              <p>No past attempts for this module.</p>
-            ) : (
-              <ul style={{ listStyle: "none", padding: 0 }}>
-                {historyData.map((h, i) => (
-                  <li key={i} style={{ padding: "10px", borderBottom: "1px solid #eee", display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Attempt {historyData.length - i}</span>
-                    <strong style={{ color: h.score < 50 ? 'red' : 'green' }}>{h.score}%</strong>
-                    <span style={{ fontSize: '12px', color: '#888' }}>{new Date(h.timestamp).toLocaleDateString()}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <button className="modern-btn btn-outline" style={{ marginTop: '20px', width: '100%' }} onClick={() => setShowHistory(false)}>Close</button>
-          </div>
+        {/* Right Col */}
+        <div style={{ display:"flex", flexDirection:"column", gap:28 }}>
+           
+           {!selectedId ? (
+              <div style={{ background:"var(--surface-1)", border:"1px dashed var(--border-medium)", borderRadius:24, minHeight:400, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", color:"var(--text-tertiary)", textAlign:"center", padding:40 }}>
+                 <div style={{ fontSize:48, marginBottom:16 }}>📚</div>
+                 <h3 style={{ fontSize:18, fontWeight:700, margin:"0 0 8px", color:"var(--text-secondary)" }}>Waiting for selection</h3>
+                 <p style={{ fontSize:14, maxWidth:300, lineHeight:1.5, margin:0 }}>Select a course from the sidebar to view materials.</p>
+              </div>
+           ) : (
+             <>
+               {role === "STUDENT" && (
+                 <div style={{ background:"linear-gradient(135deg, rgba(16,185,129,0.1), rgba(59,130,246,0.1))", borderRadius:20, padding:24, border:"1px solid rgba(16,185,129,0.2)" }}>
+                    <h3 style={{ fontSize:16, fontWeight:800, color:"#047857", margin:"0 0 16px", display:"flex", alignItems:"center", gap:8 }}>✨ AI Plan Generator</h3>
+                    <div style={{ display:"flex", gap:16, flexWrap:"wrap" }}>
+                       <select className="form-input" style={{flex:1, minWidth:150, borderRadius:10, border:"1px solid rgba(16,185,129,0.3)"}} value={selectedModule} onChange={e=>setSelectedModule(e.target.value)}>
+                         <option value="General">All Modules / Full Course</option>
+                         {Object.keys(groupedSyllabus).map(m => <option key={m} value={m}>{m}</option>)}
+                       </select>
+                       <select className="form-input" style={{width:120, borderRadius:10, border:"1px solid rgba(16,185,129,0.3)"}} value={selectedDays} onChange={e=>setSelectedDays(Number(e.target.value))}>
+                         <option value={3}>3 Days</option>
+                         <option value={7}>7 Days</option>
+                         <option value={14}>14 Days</option>
+                       </select>
+                       <button onClick={handleGenerateStudyPlan} disabled={loadingPlan} style={{ padding:"0 20px", borderRadius:10, background:"#10b981", color:"white", fontWeight:700, border:"none", cursor:"pointer", boxShadow:"0 4px 12px rgba(16,185,129,0.2)" }}>
+                         {loadingPlan ? "Generating..." : "Generate Plan"}
+                       </button>
+                    </div>
+                    {studyPlan && (
+                       <div style={{ marginTop:20, padding:20, background:"white", borderRadius:12, border:"1px solid rgba(16,185,129,0.2)", fontSize:14, lineHeight:1.6, color:"#334155" }}>
+                         {studyPlan}
+                       </div>
+                    )}
+                 </div>
+               )}
+
+               {Object.keys(groupedSyllabus).length === 0 ? (
+                 <div style={{ padding:40, textAlign:"center", color:"var(--text-tertiary)", background:"var(--surface-1)", borderRadius:20, border:"1px solid var(--border-light)" }}>No syllabus materials uploaded yet.</div>
+               ) : (
+                 <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
+                   {Object.keys(groupedSyllabus).map((module, i) => (
+                     <div key={module} style={{ background:"var(--surface-1)", borderRadius:20, border:"1px solid var(--border-light)", overflow:"hidden", boxShadow:"var(--shadow-sm)", animation:`pageEnter 0.4s ease-out ${i*50}ms` }}>
+                        <div onClick={()=> role === "STUDENT" ? setExpandedModule(expandedModule===module?null:module) : null} style={{ padding:"20px 24px", background:"var(--surface-2)", borderBottom:"1px solid var(--border-subtle)", display:"flex", justifyContent:"space-between", alignItems:"center", cursor:role==="STUDENT"?"pointer":"default" }}>
+                           <h3 style={{ margin:0, fontSize:18, fontWeight:800, color:"var(--text-primary)", display:"flex", alignItems:"center", gap:10 }}>
+                             <span style={{color:"var(--primary-color)"}}>📁</span> {module}
+                           </h3>
+                           {role === "STUDENT" && (
+                             <button onClick={(e)=>{e.stopPropagation(); handleStartTest(module)}} style={{ padding:"8px 16px", borderRadius:8, background:"linear-gradient(135deg, #3b82f6, #2563eb)", color:"white", border:"none", fontWeight:700, fontSize:12, cursor:"pointer", boxShadow:"0 4px 12px rgba(37,99,235,0.3)" }}>
+                               Mock Exam (AI)
+                             </button>
+                           )}
+                        </div>
+                        
+                        {(role !== "STUDENT" || expandedModule === module) && (
+                           <div style={{ padding:24, display:"flex", flexDirection:"column", gap:16 }}>
+                              {groupedSyllabus[module].map(item => (
+                                <div key={item.syllabusId} style={{ display:"flex", background:"var(--surface-1)", border:"1px solid var(--border-medium)", borderRadius:12, padding:16, alignItems:"center", gap:16 }}>
+                                   <div style={{ width:48, height:48, borderRadius:12, background:"rgba(59,130,246,0.1)", color:"#3b82f6", display:"flex", alignItems:"center", justifyContent:"center", fontSize:24 }}>📄</div>
+                                   <div style={{ flex:1 }}>
+                                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+                                        <h4 style={{ margin:0, fontSize:16, fontWeight:700, color:"var(--text-primary)" }}>{item.title}</h4>
+                                        {role !== "STUDENT" && (
+                                          <button onClick={()=>handleDelete(item.syllabusId)} style={{ padding:6, borderRadius:6, background:"rgba(239,68,68,0.1)", color:"#ef4444", border:"none", cursor:"pointer" }}>🗑 {item.syllabusId}</button>
+                                        )}
+                                      </div>
+                                      <p style={{ margin:"4px 0 12px", fontSize:13, color:"var(--text-secondary)", lineHeight:1.5 }}>{item.description}</p>
+                                      
+                                      <div style={{ display:"flex", gap:16, alignItems:"center", fontSize:12, fontWeight:600 }}>
+                                         <a href={getFullFileUrl(item.fileLink)} target="_blank" rel="noreferrer" style={{ color:"var(--primary-color)", textDecoration:"none" }}>📎 Open Asset</a>
+                                         <span style={{ color:"var(--text-tertiary)" }}>{new Date(item.uploadedAt).toLocaleDateString()}</span>
+                                      </div>
+                                   </div>
+                                </div>
+                              ))}
+                           </div>
+                        )}
+                     </div>
+                   ))}
+                 </div>
+               )}
+             </>
+           )}
+
         </div>
-      )}
+      </div>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    maxWidth: "1000px",
-    margin: "0 auto",
-  },
-  header: {
-    marginBottom: "32px",
-  },
-  title: {
-    fontSize: "28px",
-    fontWeight: "700",
-    marginBottom: "4px",
-  },
-  subtitle: {
-    color: "var(--text-muted)",
-    fontSize: "14px",
-  },
-  selectorWrapper: {
-    marginBottom: "32px",
-  },
-  chipGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-    gap: "12px",
-  },
-  chip: {
-    padding: "12px 16px",
-    borderRadius: "var(--radius-md)",
-    border: "1px solid var(--border-color)",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    transition: "all 0.2s",
-  },
-  chipIcon: {
-    width: "32px",
-    height: "32px",
-    borderRadius: "50%",
-    backgroundColor: "rgba(0,0,0,0.03)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "var(--text-muted)",
-    fontSize: "14px",
-  },
-  chipText: {
-    flex: 1,
-  },
-  mainGrid: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "32px",
-  },
-  sectionTitle: {
-    fontSize: "18px",
-    marginBottom: "20px",
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    borderBottom: "1px solid var(--border-color)",
-    paddingBottom: "12px",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-  },
-  formRow: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "16px",
-  },
-  formFooter: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  moduleSection: {
-    marginBottom: "24px",
-    padding: "24px",
-    cursor: "pointer",
-  },
-  moduleHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    fontWeight: "700",
-    color: "var(--text-primary)",
-    marginBottom: "16px",
-    paddingBottom: "16px",
-    borderBottom: "1px solid rgba(0,0,0,0.05)",
-  },
-  studentActionRow: {
-    display: 'flex',
-    gap: '10px'
-  },
-  itemsGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr",
-    gap: "16px",
-  },
-  itemCard: {
-    padding: "0",
-    display: "flex",
-    border: "1px solid var(--border-color)",
-    boxShadow: "none",
-    overflow: "hidden",
-  },
-  itemTag: {
-    width: "60px",
-    backgroundColor: "rgba(0,0,0,0.02)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRight: "1px solid var(--border-color)",
-  },
-  fileIcon: {
-    fontSize: "24px",
-  },
-  itemContent: {
-    flex: 1,
-    padding: "16px 20px",
-  },
-  itemTop: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: "8px",
-  },
-  itemTitle: {
-    margin: 0,
-    fontSize: "16px",
-    fontWeight: "600",
-  },
-  deleteBtn: {
-    background: "none",
-    border: "none",
-    color: "var(--text-muted)",
-    cursor: "pointer",
-    padding: "4px",
-    borderRadius: "4px",
-  },
-  itemDesc: {
-    fontSize: "14px",
-    color: "var(--text-secondary)",
-    lineHeight: "1.5",
-    marginBottom: "16px",
-  },
-  itemFooter: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  downloadLink: {
-    fontSize: "13px",
-    fontWeight: "700",
-    color: "var(--primary-color)",
-    textDecoration: "none",
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-  },
-  itemDate: {
-    fontSize: "12px",
-    color: "var(--text-muted)",
-    display: "flex",
-    alignItems: "center",
-    gap: "4px",
-  },
-  empty: {
-    textAlign: "center",
-    padding: "40px",
-    color: "var(--text-muted)",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-  },
-  loading: {
-    textAlign: "center",
-    padding: "40px",
-    color: "var(--text-muted)",
-  },
-  loaderContainer: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: "60vh",
-  },
-  modalOverlay: {
-    position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000
-  },
-  modalContent: {
-    backgroundColor: "#fff", padding: "24px", borderRadius: "12px", width: "400px", maxWidth: "90%",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.1)"
-  }
 };
 
 export default Syllabus;

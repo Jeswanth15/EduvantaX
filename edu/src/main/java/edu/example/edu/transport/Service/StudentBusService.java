@@ -100,7 +100,7 @@ public class StudentBusService {
         Location currentLoc = currentLocOpt.get();
         
         // Find next stop name
-        List<BusStop> stops = busStopRepository.findByRouteIdOrderByStopOrderAsc(routeId);
+        List<BusStop> stops = busStopRepository.findByRouteIdAndIsApprovedTrueOrderByStopOrderAsc(routeId);
         BusStop nextStop = null;
         String currentStopName = "In Transit";
         

@@ -1,11 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getDecodedToken } from "../utils/authHelper";
-import {
-  getCalendarBySchool,
-  createCalendarEntry,
-  updateCalendarEntry,
-  generateSchoolCalendar,
-} from "../utils/api";
+import { getCalendarBySchool, createCalendarEntry, updateCalendarEntry, generateSchoolCalendar } from "../utils/api";
 
 const Calendar = () => {
   const decoded = getDecodedToken();
@@ -18,346 +13,124 @@ const Calendar = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [editingDate, setEditingDate] = useState(null);
 
-  useEffect(() => {
-    if (!schoolId) return;
-    loadCalendar();
-  }, [schoolId]);
+  useEffect(() => { if (!schoolId) return; loadCalendar(); }, [schoolId]);
 
   const loadCalendar = async () => {
-    try {
-      const res = await getCalendarBySchool(schoolId);
-      setCalendar(res.data);
-    } catch (err) {
-      console.error(err);
-    }
+    try { const res = await getCalendarBySchool(schoolId); setCalendar(res.data); } catch (err) { console.error(err); }
   };
 
-  const handleChange = (e) =>
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
+  const handleGenerateChange = (e) => setGenerateForm(p => ({ ...p, [e.target.name]: e.target.value }));
 
   const handleSubmit = async () => {
-    if (!form.date) return alert("Select a date");
-    try {
-      await createCalendarEntry({ ...form, schoolId });
-      loadCalendar();
-      setForm({ date: "", status: "WORKING", description: "" });
-    } catch (err) {
-      console.error(err);
-    }
+    if (!form.date) return alert("Validation Required");
+    try { await createCalendarEntry({ ...form, schoolId }); loadCalendar(); setForm({ date: "", status: "WORKING", description: "" }); } catch (err) { console.error(err); }
   };
-
-  const handleGenerateChange = (e) =>
-    setGenerateForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleGenerate = async () => {
-    if (!generateForm.startDate || !generateForm.endDate)
-      return alert("Select start and end date");
-
+    if (!generateForm.startDate || !generateForm.endDate) return alert("Need bounds");
     try {
-      const holidaysArray = generateForm.holidays
-        ? generateForm.holidays.split(",").map((d) => d.trim())
-        : [];
-
-      await generateSchoolCalendar(
-        schoolId,
-        generateForm.startDate,
-        generateForm.endDate,
-        holidaysArray
-      );
-
+      const hols = generateForm.holidays ? generateForm.holidays.split(",").map(d => d.trim()) : [];
+      await generateSchoolCalendar(schoolId, generateForm.startDate, generateForm.endDate, hols);
       loadCalendar();
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  const changeMonth = (offset) => {
-    const newMonth = new Date(currentMonth);
-    newMonth.setMonth(newMonth.getMonth() + offset);
-    setCurrentMonth(newMonth);
-  };
+  const changeMonth = offset => { const nw = new Date(currentMonth); nw.setMonth(nw.getMonth() + offset); setCurrentMonth(nw); };
 
-  const startOfMonth = new Date(
-    currentMonth.getFullYear(),
-    currentMonth.getMonth(),
-    1
-  );
-  const endOfMonth = new Date(
-    currentMonth.getFullYear(),
-    currentMonth.getMonth() + 1,
-    0
-  );
+  const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+  const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
 
   const getCalendarDays = () => {
-    const days = [];
-    const firstDayIndex = startOfMonth.getDay();
-    for (let i = 0; i < firstDayIndex; i++) days.push(null);
-    for (let i = 1; i <= endOfMonth.getDate(); i++) {
-      days.push(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i));
-    }
+    const days = []; const id = startOfMonth.getDay();
+    for(let i=0; i<id; i++) days.push(null);
+    for(let i=1; i<=endOfMonth.getDate(); i++) days.push(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i));
     return days;
   };
 
   const getDayStatus = (date) => {
-    if (!date) return "";
-    const dateStr = date.toISOString().split("T")[0];
-    const entry = calendar.find((c) => c.date === dateStr);
-    return entry ? entry.status : null;
+    if(!date) return ""; const dt = date.toISOString().split("T")[0]; const e = calendar.find(c => c.date === dt); return e ? e.status : null;
   };
 
-  const updateDayStatus = async (dateStr, newStatus) => {
+  const updateDayStatus = async (dt, stat) => {
     try {
-      const current = calendar.find((c) => c.date === dateStr);
-      if (current) {
-        await updateCalendarEntry(current.calendarId, { ...current, status: newStatus });
-      } else {
-        await createCalendarEntry({
-          schoolId,
-          date: dateStr,
-          status: newStatus,
-        });
-      }
-      loadCalendar();
-      setEditingDate(null);
-    } catch (err) {
-      console.error(err);
-    }
+      const cur = calendar.find(c => c.date === dt);
+      if(cur) await updateCalendarEntry(cur.calendarId, {...cur, status:stat}); else await createCalendarEntry({schoolId, date:dt, status:stat});
+      loadCalendar(); setEditingDate(null);
+    } catch(err) {}
   };
 
   const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const days = getCalendarDays();
 
-  const getColor = (status) => {
-    switch (status) {
-      case "HOLIDAY":
-        return "#ffcccc";
-      case "HALF_DAY":
-        return "#fff0b3";
-      case "SUNDAY":
-        return "#dcdcdc";
-      case "WORKING":
-        return "#cce5ff";
-      default:
-        return "#ffffff";
-    }
-  };
+  const getColor = (s) => s === "HOLIDAY" ? "#fee2e2" : s === "HALF_DAY" ? "#fef3c7" : s === "SUNDAY" ? "#f1f5f9" : s === "WORKING" ? "#e0e7ff" : "transparent";
+  const getTextColor = (s) => s === "HOLIDAY" ? "#b91c1c" : s === "HALF_DAY" ? "#b45309" : s === "SUNDAY" ? "#475569" : s === "WORKING" ? "#4338ca" : "var(--text-secondary)";
 
   return (
-    <div className="calendar-page-wrapper">
-      <div className="content-wrapper">
-          <h2 className="page-title">School Calendar</h2>
+    <div style={{ maxWidth: 1100, margin: "0 auto", paddingBottom: 60 }}>
+       <div style={{ marginBottom:32 }}>
+          <h1 style={{ fontSize:32, fontWeight:900, color:"var(--text-primary)", letterSpacing:"-0.03em", margin:"0 0 6px", fontFamily:"'Outfit', sans-serif" }}>Institutional Chronology</h1>
+          <p style={{ margin:0, fontSize:14, color:"var(--text-secondary)", fontWeight:500 }}>Establish calendar logic, holidays, and automatic generation rules.</p>
+       </div>
 
-          {/* Manual Entry */}
-          <div className="card">
-            <div className="form-row">
-              <input type="date" name="date" value={form.date} onChange={handleChange} />
-              <select name="status" value={form.status} onChange={handleChange}>
-                <option value="WORKING">Working Day</option>
-                <option value="HOLIDAY">Holiday</option>
-                <option value="HALF_DAY">Half Day</option>
-              </select>
-              <input
-                type="text"
-                name="description"
-                placeholder="Description"
-                value={form.description}
-                onChange={handleChange}
-              />
-              <button className="btn-primary" onClick={handleSubmit}>
-                Add
-              </button>
-            </div>
+       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:24, marginBottom:32 }}>
+          <div style={{ background:"var(--surface-1)", borderRadius:24, padding:32, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)" }}>
+             <h3 style={{ fontSize:15, fontWeight:800, margin:"0 0 20px" }}>Mass Extrapolation</h3>
+             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
+                <div><label style={{ fontSize:10, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase" }}>Init Date</label><input type="date" name="startDate" className="form-input" style={{ width:"100%" }} value={generateForm.startDate} onChange={handleGenerateChange} /></div>
+                <div><label style={{ fontSize:10, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase" }}>End Date</label><input type="date" name="endDate" className="form-input" style={{ width:"100%" }} value={generateForm.endDate} onChange={handleGenerateChange} /></div>
+             </div>
+             <div style={{ marginBottom:20 }}><label style={{ fontSize:10, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase" }}>Global Exclusions (Comma Sep)</label><input type="text" name="holidays" placeholder="YYYY-MM-DD, YYYY-MM-DD" className="form-input" style={{ width:"100%" }} value={generateForm.holidays} onChange={handleGenerateChange} /></div>
+             <button onClick={handleGenerate} style={{ width:"100%", padding:14, background:"var(--primary-color)", color:"white", borderRadius:12, fontWeight:800, border:"none", cursor:"pointer" }}>Run Vector Sync</button>
           </div>
 
-          {/* Auto Generate */}
-          <div className="card">
-            <div className="form-row">
-              <input type="date" name="startDate" value={generateForm.startDate} onChange={handleGenerateChange} />
-              <input type="date" name="endDate" value={generateForm.endDate} onChange={handleGenerateChange} />
-              <input
-                type="text"
-                name="holidays"
-                placeholder="Holiday dates comma-separated"
-                value={generateForm.holidays}
-                onChange={handleGenerateChange}
-              />
-              <button className="btn-primary" onClick={handleGenerate}>
-                Generate
-              </button>
-            </div>
+          <div style={{ background:"var(--surface-1)", borderRadius:24, padding:32, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)" }}>
+             <h3 style={{ fontSize:15, fontWeight:800, margin:"0 0 20px" }}>Manual Point Override</h3>
+             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
+                <div><label style={{ fontSize:10, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase" }}>Target Entity</label><input type="date" name="date" className="form-input" style={{ width:"100%" }} value={form.date} onChange={handleChange} /></div>
+                <div><label style={{ fontSize:10, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase" }}>State Classification</label><select name="status" className="form-input" style={{ width:"100%" }} value={form.status} onChange={handleChange}><option value="WORKING">Working</option><option value="HOLIDAY">Holiday</option><option value="HALF_DAY">Half Day</option></select></div>
+             </div>
+             <div style={{ marginBottom:20 }}><label style={{ fontSize:10, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase" }}>Context Tag</label><input type="text" name="description" placeholder="Description Tag" className="form-input" style={{ width:"100%" }} value={form.description} onChange={handleChange} /></div>
+             <button onClick={handleSubmit} style={{ width:"100%", padding:14, background:"#f59e0b", color:"white", borderRadius:12, fontWeight:800, border:"none", cursor:"pointer" }}>Push Singular Matrix</button>
           </div>
+       </div>
 
-          {/* Toggle Calendar */}
-          <button className="btn-primary" onClick={() => setShowCalendar((prev) => !prev)}>
-            {showCalendar ? "Hide Calendar" : "View Calendar"}
+       <div style={{ display:"flex", justifyContent:"center", marginBottom:32 }}>
+          <button onClick={() => setShowCalendar(p=>!p)} style={{ padding:"14px 40px", borderRadius:99, background:"linear-gradient(135deg, #1e40af, #3b82f6)", border:"none", color:"white", fontWeight:800, fontSize:15, cursor:"pointer", boxShadow:"0 8px 24px rgba(37,99,235,0.3)" }}>
+             {showCalendar ? "Collapse GUI" : "Open Geographic Viewer"}
           </button>
+       </div>
 
-          {/* Calendar View */}
-          {showCalendar && (
-            <div className="calendar-wrapper">
-              <div className="month-header">
-                <button onClick={() => changeMonth(-1)}>◀</button>
-                <h3>
-                  {currentMonth.toLocaleString("default", {
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </h3>
-                <button onClick={() => changeMonth(1)}>▶</button>
-              </div>
+       {showCalendar && (
+          <div style={{ background:"var(--surface-1)", borderRadius:24, padding:32, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-lg)", animation:"slideDown 0.4s ease" }}>
+             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:32 }}>
+                <button onClick={()=>changeMonth(-1)} style={{ width:40, height:40, borderRadius:"50%", background:"var(--surface-2)", border:"none", fontWeight:800, cursor:"pointer" }}>←</button>
+                <h3 style={{ margin:0, fontSize:22, fontWeight:900, textTransform:"uppercase", letterSpacing:"1px" }}>{currentMonth.toLocaleString("default", { month:"long", year:"numeric" })}</h3>
+                <button onClick={()=>changeMonth(1)} style={{ width:40, height:40, borderRadius:"50%", background:"var(--surface-2)", border:"none", fontWeight:800, cursor:"pointer" }}>→</button>
+             </div>
 
-              <div className="calendar-grid">
-                {weekdays.map((w) => (
-                  <div key={w} className="weekday">
-                    {w}
-                  </div>
-                ))}
-
+             <div style={{ display:"grid", gridTemplateColumns:"repeat(7, 1fr)", gap:12 }}>
+                {weekdays.map(w => <div key={w} style={{ textAlign:"center", fontSize:11, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"1px", paddingBottom:12 }}>{w}</div>)}
                 {days.map((date, idx) => {
-                  const status = getDayStatus(date);
-                  const dateStr = date?.toISOString().split("T")[0];
-
-                  return (
-                    <div
-                      key={idx}
-                      className="calendar-cell"
-                      style={{ background: getColor(status) }}
-                      onClick={() => date && setEditingDate(dateStr)}
-                    >
-                      {date ? date.getDate() : ""}
-
-                      {editingDate === dateStr ? (
-                        <select
-                          value={status || "WORKING"}
-                          autoFocus
-                          onBlur={() => setEditingDate(null)}
-                          onChange={(e) => updateDayStatus(dateStr, e.target.value)}
-                        >
-                          <option value="WORKING">Working</option>
-                          <option value="HOLIDAY">Holiday</option>
-                          <option value="HALF_DAY">Half Day</option>
-                        </select>
-                      ) : (
-                        status && <span className="status-text">{status}</span>
-                      )}
-                    </div>
-                  );
+                   const stat = getDayStatus(date);
+                   const dtStr = date?.toISOString().split("T")[0];
+                   return (
+                      <div key={idx} onClick={()=>date && setEditingDate(dtStr)} style={{ aspectRatio:"1/1", borderRadius:16, border:date?"1px solid var(--border-medium)":"none", background:getColor(stat), display:"flex", flexDirection:"column", padding:12, position:"relative", cursor:date?"pointer":"default", transition:"transform 0.2s" }} onMouseEnter={e=>{if(date)e.currentTarget.style.transform="scale(1.03)"}} onMouseLeave={e=>{if(date)e.currentTarget.style.transform="scale(1)"}}>
+                         {date && <span style={{ fontSize:15, fontWeight:800, color:getTextColor(stat) }}>{date.getDate()}</span>}
+                         
+                         {editingDate === dtStr ? (
+                            <select autoFocus onBlur={()=>setEditingDate(null)} onChange={e=>updateDayStatus(dtStr, e.target.value)} style={{ position:"absolute", bottom:10, left:10, right:10, width:"calc(100% - 20px)", padding:4, fontSize:10, borderRadius:4, outline:"none", border:"1px solid var(--primary-color)" }} value={stat || "WORKING"}>
+                               <option value="WORKING">Work</option><option value="HOLIDAY">Hol</option><option value="HALF_DAY">Half</option>
+                            </select>
+                         ) : (
+                            stat && <span style={{ position:"absolute", bottom:12, left:12, fontSize:10, fontWeight:800, color:getTextColor(stat), textTransform:"uppercase" }}>{stat.slice(0,4)}</span>
+                         )}
+                      </div>
+                   )
                 })}
-              </div>
-            </div>
-          )}
-        </div>
-
-      {/* CSS */}
-      <style>{`
-        .page-container { display:flex; width:100%; }
-
-        .content-area {
-          flex:1;
-          background:#f3f5f9;
-          min-height:100vh;
-          transition:0.3s;
-        }
-
-        .content-wrapper {
-          padding:25px;
-          max-width:950px;
-          margin:auto;
-        }
-
-        .page-title {
-          text-align:center;
-          font-size:28px;
-          color:#0a4275;
-          margin-bottom:25px;
-        }
-
-        .card {
-          background:white;
-          padding:20px;
-          border-radius:12px;
-          margin-bottom:25px;
-          box-shadow:0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .form-row {
-          display:flex;
-          gap:10px;
-          flex-wrap:wrap;
-        }
-
-        input, select {
-          padding:10px;
-          border-radius:6px;
-          border:1px solid #ccc;
-          font-size:15px;
-        }
-
-        .btn-primary {
-          background:#0a4275;
-          color:white;
-          border:none;
-          padding:10px 18px;
-          border-radius:6px;
-          cursor:pointer;
-          font-weight:600;
-        }
-
-        .calendar-wrapper {
-          margin-top:20px;
-        }
-
-        .month-header {
-          display:flex;
-          justify-content:center;
-          align-items:center;
-          gap:15px;
-          margin-bottom:15px;
-        }
-
-        .calendar-grid {
-          display:grid;
-          grid-template-columns:repeat(7,1fr);
-          gap:5px;
-        }
-
-        .weekday {
-          font-weight:bold;
-          text-align:center;
-          padding:10px;
-        }
-
-        .calendar-cell {
-          min-height:80px;
-          padding:6px;
-          border-radius:6px;
-          text-align:center;
-          cursor:pointer;
-          display:flex;
-          flex-direction:column;
-          justify-content:center;
-        }
-
-        .status-text {
-          font-size:12px;
-          margin-top:4px;
-        }
-
-        /* MOBILE RESPONSIVE */
-        @media(max-width:600px){
-          .calendar-grid{
-            transform:scale(0.85);
-            transform-origin:top left;
-          }
-          .calendar-cell{
-            min-height:60px;
-            font-size:12px;
-          }
-          .content-wrapper{
-            padding:15px;
-          }
-        }
-      `}</style>
+             </div>
+          </div>
+       )}
     </div>
   );
 };

@@ -168,7 +168,7 @@ async def generate_questions(request: QuestionRequest):
     prompt = f"""
     Context: {context}
     
-    Generate 5 multiple-choice questions (MCQs) and 2 short answer questions based ONLY on the context above.
+    Generate 10 multiple-choice questions (MCQs) based ONLY on the context above.
     Difficulty: {request.difficulty}
     
     Output the response in STRICT JSON format:

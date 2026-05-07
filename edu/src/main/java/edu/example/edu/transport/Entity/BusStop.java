@@ -32,4 +32,7 @@ public class BusStop {
     @JoinColumn(name = "route_id", nullable = false)
     @JsonBackReference
     private Route route;
+
+    @Column(name = "is_approved", nullable = false, columnDefinition = "boolean default true")
+    private boolean isApproved = true;
 }

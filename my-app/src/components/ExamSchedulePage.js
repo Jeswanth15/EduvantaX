@@ -1,14 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import Sidebar from "./Sidebar";
-import Navbar from "./Navbar";
-import {
-  getAllClassrooms,
-  getAllSubjects,
-  getAllClassSubjects,
-  createOrUpdateExamSchedule,
-  getAllExamSchedules,
-  deleteExamSchedule,
-} from "../utils/api";
+import { getAllClassrooms, getAllSubjects, getAllClassSubjects, createOrUpdateExamSchedule, getAllExamSchedules, deleteExamSchedule } from "../utils/api";
 import { getDecodedToken } from "../utils/authHelper";
 
 const ExamSchedulePage = () => {
@@ -23,411 +14,138 @@ const ExamSchedulePage = () => {
   const [selectedClassIds, setSelectedClassIds] = useState([]);
   const [selectedSubjectIds, setSelectedSubjectIds] = useState([]);
 
-  const [form, setForm] = useState({
-    examDate: "",
-    startTime: "",
-    endTime: "",
-    roomNo: "",
-  });
-
-  const subjectById = useMemo(() => {
-    const map = new Map();
-    subjects.forEach((s) => map.set(Number(s.subjectId), s));
-    return map;
-  }, [subjects]);
-
-  const classById = useMemo(() => {
-    const map = new Map();
-    classrooms.forEach((c) => map.set(Number(c.classId), c));
-    return map;
-  }, [classrooms]);
+  const [form, setForm] = useState({ examDate: "", startTime: "", endTime: "", roomNo: "" });
 
   const subjectsForSelectedClasses = useMemo(() => {
     if (!selectedClassIds.length) return [];
     const set = new Map();
-    classSubjects.forEach((cs) => {
+    classSubjects.forEach(cs => {
       if (selectedClassIds.includes(Number(cs.classroomId))) {
-        set.set(cs.subjectId, {
-          subjectId: Number(cs.subjectId),
-          subjectName: cs.subjectName,
-        });
+        set.set(cs.subjectId, { subjectId: Number(cs.subjectId), subjectName: cs.subjectName });
       }
     });
     return [...set.values()];
   }, [selectedClassIds, classSubjects]);
 
-  // Fetch everything
   useEffect(() => {
     if (!schoolId) return;
-
-    const load = async () => {
-      try {
-        const [cls, subs, cs, exams] = await Promise.all([
-          getAllClassrooms(schoolId),
-          getAllSubjects(),
-          getAllClassSubjects(),
-          getAllExamSchedules(),
-        ]);
-
-        setClassrooms(cls.data || []);
-        setSubjects(subs.data || []);
-        setClassSubjects(cs.data || []);
-        setExamSchedules(exams.data || []);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    load();
+    Promise.all([getAllClassrooms(schoolId), getAllSubjects(), getAllClassSubjects(), getAllExamSchedules()])
+      .then(([cls, subs, cs, exams]) => {
+        setClassrooms(cls.data || []); setSubjects(subs.data || []); setClassSubjects(cs.data || []); setExamSchedules(exams.data || []);
+      }).catch(console.error);
   }, [schoolId]);
 
   const handleClassroomsChange = (e) => {
-    const list = [...e.target.selectedOptions].map((opt) => Number(opt.value));
-    setSelectedClassIds(list);
-    setSelectedSubjectIds([]);
+    const list = [...e.target.selectedOptions].map(opt => Number(opt.value));
+    setSelectedClassIds(list); setSelectedSubjectIds([]);
   };
 
-  const toggleSubject = (id) => {
-    setSelectedSubjectIds((prev) =>
-      prev.includes(id)
-        ? prev.filter((s) => s !== id)
-        : [...prev, id]
-    );
-  };
+  const toggleSubject = (id) => setSelectedSubjectIds(p => p.includes(id) ? p.filter(s => s !== id) : [...p, id]);
 
   const handleCreate = async () => {
     if (!selectedClassIds.length) return alert("Select at least one class");
     if (!selectedSubjectIds.length) return alert("Select at least one subject");
-    if (!form.examDate || !form.startTime || !form.endTime)
-      return alert("Fill date and time");
+    if (!form.examDate || !form.startTime || !form.endTime) return alert("Fill date and time");
 
     try {
       const tasks = [];
       for (let classId of selectedClassIds) {
         for (let subjectId of selectedSubjectIds) {
-          tasks.push(
-            createOrUpdateExamSchedule({
-              classroomId: classId,
-              subjectId,
-              ...form,
-            })
-          );
+          tasks.push(createOrUpdateExamSchedule({ classroomId: classId, subjectId, ...form }));
         }
       }
       await Promise.all(tasks);
-      alert("Exam created!");
-
+      setForm({ examDate: "", startTime: "", endTime: "", roomNo: "" }); setSelectedSubjectIds([]);
       const res = await getAllExamSchedules();
       setExamSchedules(res.data || []);
-
-      setForm({ examDate: "", startTime: "", endTime: "", roomNo: "" });
-      setSelectedSubjectIds([]);
-    } catch (err) {
-      console.error(err);
-      alert("Error creating exam");
-    }
+    } catch { alert("Error creating exam"); }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this exam?")) return;
-    try {
-      await deleteExamSchedule(id);
-      const res = await getAllExamSchedules();
-      setExamSchedules(res.data || []);
-    } catch (err) {
-      console.error(err);
-      alert("Delete failed");
-    }
+    try { await deleteExamSchedule(id); const res = await getAllExamSchedules(); setExamSchedules(res.data || []); }
+    catch { alert("Delete failed"); }
   };
 
   return (
-    <div className="exam-schedule-view">
-      <div className="exam-wrapper">
-          <h2 className="exam-title">📘 Exam Schedule</h2>
+    <div style={{ maxWidth: 1200, margin: "0 auto", paddingBottom: 40 }}>
+      <div style={{ marginBottom: 32 }}>
+        <h1 style={{ fontSize:32, fontWeight:900, color:"var(--text-primary)", letterSpacing:"-0.03em", margin:"0 0 6px", fontFamily:"'Outfit', sans-serif" }}>Examination Planner</h1>
+        <p style={{ margin:0, fontSize:14, color:"var(--text-secondary)", fontWeight:500 }}>Schedule and allocate testing modules efficiently.</p>
+      </div>
 
-          <div className="exam-layout">
+      <div style={{ display:"grid", gridTemplateColumns:"320px 1fr", gap:28, alignItems:"start" }}>
+        {/* Left pane: Form Config */}
+        <div style={{ display:"flex", flexDirection:"column", gap:20, position:"sticky", top:20 }}>
+           <div style={{ background:"var(--surface-1)", borderRadius:20, padding:24, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)" }}>
+             <h3 style={{ fontSize:14, fontWeight:800, color:"var(--text-primary)", textTransform:"uppercase", letterSpacing:"1px", margin:"0 0 20px" }}>Module Selectors</h3>
+             <label style={{ fontSize:12, fontWeight:700, color:"var(--text-secondary)", marginBottom:8, display:"block" }}>Target Classrooms (Multi-select ctrl/cmd)</label>
+             <select multiple value={selectedClassIds} onChange={handleClassroomsChange} className="form-input" style={{ height:140, borderRadius:12, marginBottom:20, padding:8 }}>
+               {classrooms.map(c => <option key={c.classId} value={c.classId} style={{padding:"6px 8px"}}>{c.name} {c.section}</option>)}
+             </select>
 
-            {/* LEFT FILTERS */}
-            <aside className="exam-filters">
-              <h3>Filters</h3>
-
-              <label>Classrooms</label>
-              <select
-                multiple
-                value={selectedClassIds}
-                onChange={handleClassroomsChange}
-                className="input"
-                style={{ height: 140 }}
-              >
-                {classrooms.map((c) => (
-                  <option key={c.classId} value={c.classId}>
-                    {c.name} {c.section}
-                  </option>
-                ))}
-              </select>
-
-              <label style={{ marginTop: 15 }}>Subjects</label>
-
-              {selectedClassIds.length === 0 && (
-                <p className="muted">Select classes first</p>
-              )}
-
-              {selectedClassIds.length > 0 && (
-                <div className="subject-grid">
-                  {subjectsForSelectedClasses.map((sub) => (
-                    <div key={sub.subjectId} className="subject-chip">
-                      <input
-                        type="checkbox"
-                        checked={selectedSubjectIds.includes(sub.subjectId)}
-                        onChange={() => toggleSubject(sub.subjectId)}
-                      />
-                      <span>{sub.subjectName}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </aside>
-
-            {/* RIGHT SIDE CONTENT */}
-            <main className="exam-content">
-
-              {/* CREATE CARD */}
-              <div className="card">
-                <h3>➕ Create Exam</h3>
-
-                <div className="grid">
-                  <div>
-                    <label>Date</label>
-                    <input
-                      type="date"
-                      value={form.examDate}
-                      onChange={(e) =>
-                        setForm({ ...form, examDate: e.target.value })
-                      }
-                      className="input"
-                    />
-                  </div>
-
-                  <div>
-                    <label>Start Time</label>
-                    <input
-                      type="time"
-                      value={form.startTime}
-                      onChange={(e) =>
-                        setForm({ ...form, startTime: e.target.value })
-                      }
-                      className="input"
-                    />
-                  </div>
-
-                  <div>
-                    <label>End Time</label>
-                    <input
-                      type="time"
-                      value={form.endTime}
-                      onChange={(e) =>
-                        setForm({ ...form, endTime: e.target.value })
-                      }
-                      className="input"
-                    />
-                  </div>
-
-                  <div>
-                    <label>Room No</label>
-                    <input
-                      type="text"
-                      placeholder="A-203"
-                      value={form.roomNo}
-                      onChange={(e) =>
-                        setForm({ ...form, roomNo: e.target.value })
-                      }
-                      className="input"
-                    />
-                  </div>
-                </div>
-
-                <button className="btn" onClick={handleCreate}>
-                  Save Exam
-                </button>
-              </div>
-
-              {/* UPCOMING EXAMS */}
-              <div className="exam-list">
-                <h3>Upcoming Exams</h3>
-
-                {examSchedules.length === 0 && (
-                  <p className="muted">No exams yet</p>
-                )}
-
-                {examSchedules.map((exam) => (
-                  <div key={exam.examScheduleId} className="exam-card">
-                    <h4>{exam.subjectName}</h4>
-
-                    <div className="info">
-                      <p><strong>Date:</strong> {exam.examDate}</p>
-                      <p>
-                        <strong>Time:</strong> {exam.startTime} -{" "}
-                        {exam.endTime}
-                      </p>
-                      <p><strong>Room:</strong> {exam.roomNo}</p>
-                    </div>
-
-                    <button
-                      className="delete"
-                      onClick={() => handleDelete(exam.examScheduleId)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-            </main>
-          </div>
+             <label style={{ fontSize:12, fontWeight:700, color:"var(--text-secondary)", marginBottom:8, display:"block" }}>Examinable Subjects</label>
+             {selectedClassIds.length === 0 ? <div style={{ fontSize:12, color:"var(--text-tertiary)", padding:"12px", background:"var(--surface-2)", borderRadius:10, textAlign:"center" }}>Select classrooms first.</div> : (
+               <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                 {subjectsForSelectedClasses.map(sub => (
+                   <label key={sub.subjectId} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", background: selectedSubjectIds.includes(sub.subjectId)?"rgba(59,130,246,0.1)":"var(--surface-2)", border: selectedSubjectIds.includes(sub.subjectId)? "1px solid rgba(59,130,246,0.3)":"1px solid var(--border-subtle)", borderRadius:10, cursor:"pointer", transition:"all 0.2s" }}>
+                     <input type="checkbox" checked={selectedSubjectIds.includes(sub.subjectId)} onChange={()=>toggleSubject(sub.subjectId)} style={{accentColor:"var(--primary-color)", width:16, height:16, cursor:"pointer"}} />
+                     <span style={{ fontSize:13, fontWeight:700, color: selectedSubjectIds.includes(sub.subjectId)?"var(--primary-color)":"var(--text-primary)" }}>{sub.subjectName}</span>
+                   </label>
+                 ))}
+               </div>
+             )}
+           </div>
         </div>
 
-      {/* STYLES */}
-      <style>{`
-        :root {
-          --primary: #0a4275;
-          --surface: #f3f5f9;
-          --card: #fff;
-          --muted: #777;
-        }
+        {/* Right pane: Create Form + List */}
+        <div style={{ display:"flex", flexDirection:"column", gap:28 }}>
+          
+          <div style={{ background:"var(--surface-1)", borderRadius:20, padding:24, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)", overflow:"hidden" }}>
+             <h3 style={{ fontSize:16, fontWeight:800, color:"var(--text-primary)", margin:"0 0 20px" }}>➕ Provision Exam Slot</h3>
+             <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(200px, 1fr))", gap:16, marginBottom:20 }}>
+                <div>
+                  <label style={{ fontSize:12, fontWeight:700, color:"var(--text-secondary)", marginBottom:6, display:"block" }}>Exam Date</label>
+                  <input type="date" value={form.examDate} onChange={e=>setForm({...form, examDate:e.target.value})} className="form-input" style={{borderRadius:10}} />
+                </div>
+                <div>
+                  <label style={{ fontSize:12, fontWeight:700, color:"var(--text-secondary)", marginBottom:6, display:"block" }}>Start Time</label>
+                  <input type="time" value={form.startTime} onChange={e=>setForm({...form, startTime:e.target.value})} className="form-input" style={{borderRadius:10}} />
+                </div>
+                <div>
+                  <label style={{ fontSize:12, fontWeight:700, color:"var(--text-secondary)", marginBottom:6, display:"block" }}>End Time</label>
+                  <input type="time" value={form.endTime} onChange={e=>setForm({...form, endTime:e.target.value})} className="form-input" style={{borderRadius:10}} />
+                </div>
+                <div>
+                  <label style={{ fontSize:12, fontWeight:700, color:"var(--text-secondary)", marginBottom:6, display:"block" }}>Invigilation Room</label>
+                  <input type="text" placeholder="e.g. Hall A" value={form.roomNo} onChange={e=>setForm({...form, roomNo:e.target.value})} className="form-input" style={{borderRadius:10}} />
+                </div>
+             </div>
+             <button onClick={handleCreate} style={{ width:"100%", padding:"14px", borderRadius:12, background:"linear-gradient(135deg, #10b981, #059669)", color:"white", fontWeight:800, border:"none", cursor:"pointer", boxShadow:"0 4px 12px rgba(16,185,129,0.3)" }}>Publish Exam Schedule</button>
+          </div>
 
-        .exam-flex {
-          display: flex;
-        }
+          <div>
+             <h3 style={{ fontSize:18, fontWeight:800, color:"var(--text-primary)", margin:"0 0 16px" }}>Scheduled Master Roster</h3>
+             {examSchedules.length === 0 ? <div style={{ background:"var(--surface-1)", borderRadius:20, padding:40, textAlign:"center", color:"var(--text-tertiary)", border:"1px dashed var(--border-medium)" }}>No exams scheduled.</div> : (
+               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(300px, 1fr))", gap:16 }}>
+                 {examSchedules.map(exam => (
+                   <div key={exam.examScheduleId} style={{ background:"var(--surface-1)", border:"1px solid var(--border-light)", borderRadius:16, padding:20, position:"relative", boxShadow:"var(--shadow-sm)" }}>
+                     <div style={{ position:"absolute", top:20, right:20, width:10, height:10, borderRadius:"50%", background:"#ef4444", boxShadow:"0 0 8px #ef4444" }} />
+                     <h4 style={{ margin:"0 0 16px", fontSize:16, color:"var(--primary-color)", fontWeight:800 }}>{exam.subjectName}</h4>
+                     <div style={{ display:"flex", flexDirection:"column", gap:8, fontSize:13, color:"var(--text-secondary)" }}>
+                       <div style={{ display:"flex", justifyContent:"space-between" }}><span style={{fontWeight:600}}>Date:</span> <span>{exam.examDate}</span></div>
+                       <div style={{ display:"flex", justifyContent:"space-between" }}><span style={{fontWeight:600}}>Window:</span> <span>{exam.startTime} - {exam.endTime}</span></div>
+                       <div style={{ display:"flex", justifyContent:"space-between" }}><span style={{fontWeight:600}}>Venue:</span> <span>{exam.roomNo || "TBD"}</span></div>
+                     </div>
+                     <button onClick={()=>handleDelete(exam.examScheduleId)} style={{ marginTop:16, width:"100%", padding:"8px", borderRadius:8, background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.2)", color:"#ef4444", fontWeight:700, fontSize:12, cursor:"pointer", transition:"all 0.2s" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(239,68,68,0.15)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(239,68,68,0.1)"}>Cancel Exam</button>
+                   </div>
+                 ))}
+               </div>
+             )}
+          </div>
 
-        .exam-main {
-          flex: 1;
-          background: var(--surface);
-          min-height: 100vh;
-        }
-
-        .exam-wrapper {
-          padding: 20px;
-          max-width: 1200px;
-          margin: auto;
-        }
-
-        .exam-title {
-          text-align: center;
-          color: var(--primary);
-          font-size: 28px;
-          margin-bottom: 20px;
-        }
-
-        .exam-layout {
-          display: grid;
-          grid-template-columns: 280px 1fr;
-          gap: 20px;
-        }
-
-        .exam-filters {
-          background: var(--card);
-          padding: 18px;
-          border-radius: 12px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-          height: fit-content;
-        }
-
-        .exam-filters h3 {
-          margin-bottom: 15px;
-        }
-
-        .input {
-          width: 100%;
-          padding: 10px;
-          border-radius: 6px;
-          border: 1px solid #ccc;
-          margin-top: 5px;
-        }
-
-        .subject-grid {
-          margin-top: 10px;
-          display: grid;
-          gap: 10px;
-        }
-
-        .subject-chip {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 10px;
-          background: #eef3ff;
-          border: 1px solid #d6e1ff;
-          border-radius: 6px;
-        }
-
-        .exam-content .card {
-          background: var(--card);
-          padding: 18px;
-          border-radius: 12px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-          margin-bottom: 25px;
-        }
-
-        .grid {
-          display: grid;
-          gap: 15px;
-          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        }
-
-        .btn {
-          margin-top: 15px;
-          padding: 12px;
-          width: 100%;
-          background: var(--primary);
-          color: #fff;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
-          font-weight: bold;
-        }
-
-        .exam-list h3 {
-          margin-bottom: 15px;
-        }
-
-        .exam-card {
-          background: var(--card);
-          padding: 15px;
-          margin-bottom: 12px;
-          border-radius: 10px;
-          box-shadow: 0 3px 10px rgba(0,0,0,0.05);
-        }
-
-        .exam-card h4 {
-          margin-bottom: 10px;
-          color: var(--primary);
-        }
-
-        .info p {
-          margin: 4px 0;
-        }
-
-        .delete {
-          margin-top: 10px;
-          background: #d9534f;
-          color: white;
-          padding: 6px 12px;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
-        }
-
-        .muted {
-          color: var(--muted);
-        }
-
-        /* RESPONSIVE */
-        @media (max-width: 900px) {
-          .exam-layout {
-            grid-template-columns: 1fr;
-          }
-        }
-      `}</style>
+        </div>
+      </div>
     </div>
   );
 };

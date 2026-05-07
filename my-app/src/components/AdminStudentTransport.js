@@ -8,198 +8,116 @@ const AdminStudentTransport = () => {
   const [routes, setRoutes] = useState([]);
   const [msg, setMsg] = useState("");
   const [filters, setFilters] = useState({ name: "", type: "ALL" });
+  const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
     try {
       const decoded = getDecodedToken();
       if (decoded?.schoolId) {
-        const [sRes, bRes, rRes] = await Promise.all([
-          getAllStudents(decoded.schoolId),
-          getAllBuses(),
-          getAllRoutes()
-        ]);
-        setStudents(sRes.data);
-        setBuses(bRes.data);
-        setRoutes(rRes.data);
+        const [s, b, r] = await Promise.all([ getAllStudents(decoded.schoolId), getAllBuses(), getAllRoutes() ]);
+        setStudents(s.data); setBuses(b.data); setRoutes(r.data);
       }
-    } catch (err) {
-      setMsg("Error loading data");
-    }
+    } catch (err) { setMsg("Error loading assets."); } finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
-  const handleTypeChange = async (studentId, newType) => {
-    try {
-      await updateStudentType(studentId, newType);
-      setMsg("Student type updated");
-      fetchData();
-    } catch (err) {
-      setMsg("Update failed");
-    }
-  };
+  const handleTypeChange = async (sId, nType) => { try { await updateStudentType(sId, nType); setMsg("Protocol updated."); fetchData(); } catch(err){} };
+  const handleStopAssignment = async (sId, stopId) => { if(stopId){ try { await assignStudentStop(sId, stopId); setMsg("Coordinates assigned."); fetchData(); } catch(err) {} } };
 
-  const handleStopAssignment = async (studentId, stopId) => {
-    if (!stopId) return;
-    try {
-      await assignStudentStop(studentId, stopId);
-      setMsg("Pickup point assigned successfully");
-      fetchData();
-    } catch (err) {
-      setMsg("Assignment failed");
-    }
-  };
+  const filtered = students.filter(s => 
+    (s.name || "").toLowerCase().includes(filters.name.toLowerCase()) && 
+    (filters.type === "ALL" || (s.studentType || "DAY_SCHOLAR") === filters.type)
+  );
 
-  const filteredStudents = students.filter(s => {
-    const matchesName = s.name.toLowerCase().includes(filters.name.toLowerCase());
-    const matchesType = filters.type === "ALL" || s.studentType === filters.type;
-    return matchesName && matchesType;
-  });
+  if (loading) return <div style={{textAlign:"center", padding:100, color:"var(--text-tertiary)"}}>Deploying manifest...</div>;
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h2 style={styles.title}>Student Transport Management</h2>
-        <p style={styles.subtitle}>Assign students to pickup points and manage transport types.</p>
-      </div>
+    <div style={{ maxWidth: 1200, margin: "0 auto", paddingBottom: 60 }}>
+       <div style={{ marginBottom:32 }}>
+          <h1 style={{ fontSize:32, fontWeight:900, color:"var(--text-primary)", letterSpacing:"-0.03em", margin:"0 0 6px", fontFamily:"'Outfit', sans-serif" }}>Passenger Manifest</h1>
+          <p style={{ margin:0, fontSize:15, color:"var(--text-secondary)", fontWeight:600 }}>Resolve permissions and binding limits per user.</p>
+       </div>
 
-      {msg && <div style={{...styles.alert, background: msg.includes('Error') || msg.includes('failed') ? '#fee2e2' : '#ecfdf5', color: msg.includes('Error') || msg.includes('failed') ? '#991b1b' : '#065f46'}}>{msg}</div>}
+       {msg && <div style={{ background:"var(--text-primary)", color:"white", padding:16, borderRadius:16, marginBottom:24, fontWeight:800 }}>{msg}</div>}
 
-      <div style={styles.searchBar}>
-        <input 
-          placeholder="Search student by name..." 
-          style={styles.searchInput}
-          value={filters.name}
-          onChange={(e) => setFilters({...filters, name: e.target.value})}
-        />
-        <select 
-          style={styles.selectFilter}
-          value={filters.type}
-          onChange={(e) => setFilters({...filters, type: e.target.value})}
-        >
-          <option value="ALL">All Types</option>
-          <option value="DAY_SCHOLAR">Day Scholar</option>
-          <option value="HOSTELLER">Hosteller</option>
-        </select>
-      </div>
+       <div style={{ background:"var(--surface-1)", borderRadius:24, padding:24, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)", marginBottom:32 }}>
+          <div style={{ display:"flex", gap:16, background:"var(--surface-2)", padding:8, borderRadius:16 }}>
+             <input placeholder="Filter identity..." value={filters.name} onChange={e=>setFilters({...filters, name:e.target.value})} className="form-input" style={{ flex:1, border:"none", background:"transparent" }} />
+             <select value={filters.type} onChange={e=>setFilters({...filters, type:e.target.value})} className="form-input" style={{ width:200, borderRadius:12 }}>
+                <option value="ALL">All Categories</option>
+                <option value="DAY_SCHOLAR">Day Scholar</option>
+                <option value="HOSTELLER">Hosteller</option>
+             </select>
+          </div>
+       </div>
 
-      <div style={styles.card}>
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              <th style={styles.th}>Student Name</th>
-              <th style={styles.th}>Type</th>
-              <th style={styles.th}>Bus & Pickup Point</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredStudents.map(s => (
-              <tr key={s.userId} style={styles.tr}>
-                <td style={styles.td}>
-                   <div style={{fontWeight:'600'}}>{s.name}</div>
-                   <div style={{fontSize:'12px', color:'#64748b'}}>{s.email}</div>
-                </td>
-                <td style={styles.td}>
-                  <select 
-                    value={s.studentType || "DAY_SCHOLAR"} 
-                    onChange={(e) => handleTypeChange(s.userId, e.target.value)}
-                    style={styles.selectCompact}
-                  >
-                    <option value="DAY_SCHOLAR">Day Scholar</option>
-                    <option value="HOSTELLER">Hosteller</option>
-                  </select>
-                </td>
-                <td style={styles.td}>
-                  {(!s.studentType || s.studentType === "DAY_SCHOLAR") ? (
-                    <StudentAssignmentActions 
-                      student={s} 
-                      buses={buses} 
-                      routes={routes} 
-                      onAssign={(stopId) => handleStopAssignment(s.userId, stopId)}
-                    />
-                  ) : (
-                    <span style={{color:'#94a3b8', fontSize:'13px'}}>No transport for Hostellers</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {filteredStudents.length === 0 && <div style={{padding:'40px', textAlign:'center', color:'#64748b'}}>No students found matching filters.</div>}
-      </div>
+       <div style={{ background:"var(--surface-1)", borderRadius:24, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)", overflow:"hidden" }}>
+          <table style={{ width:"100%", borderCollapse:"collapse" }}>
+             <thead><tr>
+                <th style={{ padding:"16px 32px", textAlign:"left", fontSize:11, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase", borderBottom:"1px solid var(--border-subtle)" }}>Identity</th>
+                <th style={{ padding:"16px 32px", textAlign:"left", fontSize:11, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase", borderBottom:"1px solid var(--border-subtle)" }}>Architecture</th>
+                <th style={{ padding:"16px 32px", textAlign:"left", fontSize:11, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase", borderBottom:"1px solid var(--border-subtle)" }}>Geo Mapping</th>
+             </tr></thead>
+             <tbody>
+                {filtered.map((s, i) => (
+                   <tr key={s.userId} style={{ borderBottom:"1px solid var(--border-subtle)", animation:`pageEnter 0.2s ease ${i*15}ms both` }}>
+                      <td style={{ padding:"20px 32px" }}>
+                         <div style={{ fontSize:15, fontWeight:800, color:"var(--text-primary)", marginBottom:4 }}>{s.name}</div>
+                         <div style={{ fontSize:13, color:"var(--text-secondary)", fontWeight:600 }}>{s.email}</div>
+                      </td>
+                      <td style={{ padding:"20px 32px" }}>
+                         <select value={s.studentType||"DAY_SCHOLAR"} onChange={e=>handleTypeChange(s.userId,e.target.value)} className="form-input" style={{ width:160, borderRadius:10, padding:"8px 12px", background:(s.studentType==="HOSTELLER"?"rgba(245,158,11,0.05)":"var(--surface-2)"), color:(s.studentType==="HOSTELLER"?"#d97706":"inherit"), borderColor:(s.studentType==="HOSTELLER"?"rgba(245,158,11,0.3)":"var(--border-medium)") }}>
+                            <option value="DAY_SCHOLAR">Day Scholar</option>
+                            <option value="HOSTELLER">Hosteller</option>
+                         </select>
+                      </td>
+                      <td style={{ padding:"20px 32px" }}>
+                         {(!s.studentType || s.studentType==="DAY_SCHOLAR") ? (
+                            <StudentAssignmentActions student={s} buses={buses} routes={routes} onAssign={(c)=>handleStopAssignment(s.userId, c)} />
+                         ) : <span style={{ fontSize:13, fontWeight:800, color:"var(--text-tertiary)", opacity:0.7 }}>Transport Restrict</span>}
+                      </td>
+                   </tr>
+                ))}
+             </tbody>
+          </table>
+       </div>
     </div>
   );
 };
 
-// Helper component for complex assignment logic
 const StudentAssignmentActions = ({ student, buses, routes, onAssign }) => {
-  const [selectedBusId, setSelectedBusId] = useState("");
-  
-  // Find current assignment info if exists
+  const [sBusId, setSBusId] = useState("");
   const currentStopId = student.assignedStopId;
-  let currentBusId = "";
-  let currentRouteStops = [];
+  let initBus = "";
 
-  // Derive current bus from stop
   if (currentStopId) {
-    const route = routes.find(r => (r.stops || []).some(st => st.id === currentStopId));
-    if (route) {
-        const bus = buses.find(b => b.route?.id === route.id);
-        if (bus) currentBusId = bus.id;
-    }
+    const route = routes.find(r => (r.stops||[]).some(st=>st.id===currentStopId));
+    if (route) { const b = buses.find(b=>b.route?.id===route.id); if (b) initBus = b.id; }
   }
 
-  // Effect to set initial bus view
-  useEffect(() => {
-    if (currentBusId) setSelectedBusId(currentBusId);
-  }, [currentBusId]);
-
-  const activeBus = buses.find(b => b.id === parseInt(selectedBusId));
-  const activeRouteStops = activeBus?.route?.stops || [];
+  useEffect(() => { if (initBus) setSBusId(initBus); else setSBusId(""); }, [initBus, currentStopId]);
+  const activeBus = buses.find(b=>b.id===parseInt(sBusId));
+  const reqStops = activeBus?.route?.stops || [];
 
   return (
-    <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
-      <select 
-        value={selectedBusId} 
-        onChange={(e) => setSelectedBusId(e.target.value)}
-        style={styles.selectCompact}
-      >
-        <option value="">Select Bus...</option>
-        {buses.map(b => <option key={b.id} value={b.id}>Bus {b.busNumber} ({b.route?.routeName || 'No Route'})</option>)}
-      </select>
-
-      <select 
-        defaultValue={currentStopId || ""}
-        onChange={(e) => onAssign(e.target.value)}
-        style={styles.selectCompact}
-        disabled={!selectedBusId}
-      >
-        <option value="">Select Stop...</option>
-        {activeRouteStops.map(st => <option key={st.id} value={st.id}>{st.stopName}</option>)}
-      </select>
-      
-      {currentStopId && <span style={{fontSize:'12px', color:'#10b981'}}>✅</span>}
+    <div style={{ display:"flex", gap:12, alignItems:"center" }}>
+       <select value={sBusId} onChange={e=>{
+           setSBusId(e.target.value);
+           if (!e.target.value) {
+               // if bus is unselected, we might want to clear the stop, but the API doesn't support clear stop directly yet
+           }
+       }} className="form-input" style={{ width:180, borderRadius:10, padding:"8px 12px" }}>
+          <option value="">Vehicle Assign</option>
+          {buses.map(b => <option key={b.id} value={b.id}>Bus {b.busNumber}</option>)}
+       </select>
+       <select value={currentStopId||""} onChange={e=>onAssign(e.target.value)} disabled={!sBusId} className="form-input" style={{ width:180, borderRadius:10, padding:"8px 12px", opacity:sBusId?1:0.5 }}>
+          <option value="">Target Node</option>
+          {reqStops.map(st => <option key={st.id} value={st.id}>{st.stopName}</option>)}
+       </select>
+       {currentStopId && <div style={{ width:28, height:28, background:"#10b981", color:"white", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12 }}>✓</div>}
     </div>
   );
-};
-
-const styles = {
-  container: { padding: "40px", maxWidth: "1200px", margin: "0 auto", minHeight: "100vh", backgroundColor: "#f8fafc" },
-  header: { marginBottom: "30px" },
-  title: { fontSize: "28px", fontWeight: "800", color: "#1e293b", marginBottom: "8px" },
-  subtitle: { color: "#64748b", fontSize: "16px" },
-  card: { backgroundColor: "white", borderRadius: "16px", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)", padding: "20px", overflow: "hidden" },
-  searchBar: { display: "flex", gap: "15px", marginBottom: "20px" },
-  searchInput: { flex: 1, padding: "12px 16px", borderRadius: "10px", border: "1px solid #e2e8f0", outline: "none", fontSize: "14px" },
-  selectFilter: { padding: "12px 16px", borderRadius: "10px", border: "1px solid #e2e8f0", backgroundColor: "white", outline: "none", cursor: "pointer" },
-  table: { width: "100%", borderCollapse: "collapse" },
-  th: { textAlign: "left", padding: "12px 15px", borderBottom: "2px solid #f1f5f9", color: "#64748b", fontWeight: "600", fontSize: "13px" },
-  tr: { borderBottom: "1px solid #f1f5f9" },
-  td: { padding: "15px", verticalAlign: "middle" },
-  selectCompact: { padding: "6px 10px", borderRadius: "6px", border: "1px solid #e2e8f0", backgroundColor: "#fff", fontSize: "13px", outline: "none" },
-  alert: { padding: "12px 20px", borderRadius: "10px", marginBottom: "20px", fontWeight: "500", fontSize: "14px" }
 };
 
 export default AdminStudentTransport;

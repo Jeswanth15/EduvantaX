@@ -93,8 +93,24 @@ public class AdminTransportController {
         return ResponseEntity.ok(adminService.getAllStudentsBySchool(schoolId));
     }
 
-    @GetMapping("/trip-summary")
-    public ResponseEntity<List<edu.example.edu.transport.DTO.TripSummaryDTO>> getTripSummary() {
+    @GetMapping("/trip-summaries")
+    public ResponseEntity<List<edu.example.edu.transport.DTO.TripSummaryDTO>> getTripSummaries() {
         return ResponseEntity.ok(adminService.getTripSummaries());
+    }
+
+    @GetMapping("/proposed-stops")
+    public ResponseEntity<List<BusStop>> getProposedStops() {
+        return ResponseEntity.ok(adminService.getProposedStops());
+    }
+
+    @PutMapping("/approve-stop/{stopId}")
+    public ResponseEntity<BusStop> approveStop(@PathVariable Long stopId, @RequestParam(required = false) Integer order) {
+        return ResponseEntity.ok(adminService.approveStop(stopId, order));
+    }
+
+    @DeleteMapping("/stop/{stopId}")
+    public ResponseEntity<String> deleteStop(@PathVariable Long stopId) {
+        adminService.deleteStop(stopId);
+        return ResponseEntity.ok("Stop deleted");
     }
 }

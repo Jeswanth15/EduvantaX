@@ -9,6 +9,7 @@ import java.util.Optional;
 
 @Repository
 public interface BusStopRepository extends JpaRepository<BusStop, Long> {
-    List<BusStop> findByRouteIdOrderByStopOrderAsc(Long routeId);
-    Optional<BusStop> findFirstByRouteIdOrderByStopOrderAsc(Long routeId);
+    List<BusStop> findByRouteIdAndIsApprovedTrueOrderByStopOrderAsc(Long routeId);
+    Optional<BusStop> findFirstByRouteIdAndIsApprovedTrueOrderByStopOrderAsc(Long routeId);
+    List<BusStop> findByIsApprovedFalse();
 }

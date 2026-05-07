@@ -1,267 +1,153 @@
 import React, { useEffect, useState } from "react";
-import Sidebar from "./Sidebar";
-import Navbar from "./Navbar";
 import { getDecodedToken } from "../utils/authHelper";
-import {
-    getAllClassrooms,
-    getAllTimetables,
-    getSubstitutionsByDate,
-    createSubstitution,
-    deleteSubstitution,
-    getFreeTeachers,
-} from "../utils/api";
+import { getAllClassrooms, getAllTimetables, getSubstitutionsByDate, createSubstitution, deleteSubstitution, getFreeTeachers } from "../utils/api";
 
 const Substitution = () => {
-    const decoded = getDecodedToken();
-    const schoolId = decoded?.schoolId;
+  const decoded = getDecodedToken();
+  const schoolId = decoded?.schoolId;
 
-    const [classrooms, setClassrooms] = useState([]);
-    const [timetables, setTimetables] = useState([]);
-    const [substitutions, setSubstitutions] = useState([]);
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
-    const [selectedClassId, setSelectedClassId] = useState("");
-    const [selectedPeriod, setSelectedPeriod] = useState("");
-    const [freeTeachers, setFreeTeachers] = useState([]);
-    const [selectedSubstituteId, setSelectedSubstituteId] = useState("");
-    const [reason, setReason] = useState("");
+  const [classrooms, setClassrooms] = useState([]);
+  const [timetables, setTimetables] = useState([]);
+  const [substitutions, setSubstitutions] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [selectedClassId, setSelectedClassId] = useState("");
+  const [selectedPeriod, setSelectedPeriod] = useState("");
+  const [freeTeachers, setFreeTeachers] = useState([]);
+  const [selectedSubstituteId, setSelectedSubstituteId] = useState("");
+  const [reason, setReason] = useState("");
+  const [loading, setLoading] = useState(true);
 
-    const daysOfWeek = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-    const periods = [1, 2, 3, 4, 5, 6, 7];
+  const daysOfWeek = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+  const periods = [1, 2, 3, 4, 5, 6, 7];
 
-    useEffect(() => {
-        if (!schoolId) return;
-        const fetchData = async () => {
-            try {
-                const [clsRes, ttRes, subRes] = await Promise.all([
-                    getAllClassrooms(schoolId),
-                    getAllTimetables(),
-                    getSubstitutionsByDate(selectedDate),
-                ]);
-                setClassrooms(clsRes.data);
-                setTimetables(ttRes.data);
-                setSubstitutions(subRes.data);
-            } catch (err) {
-                console.error(err);
-            }
-        };
-        fetchData();
-    }, [schoolId, selectedDate]);
-
-    const handleDateChange = (e) => setSelectedDate(e.target.value);
-
-    const findFreeTeachersForPeriod = async () => {
-        if (!selectedDate || !selectedPeriod) {
-            alert("Please select date and period");
-            return;
-        }
-        const dayName = daysOfWeek[new Date(selectedDate).getDay()];
-        if (dayName === "SUN") {
-            alert("Sunday is a holiday");
-            return;
-        }
-
-        try {
-            const res = await getFreeTeachers(selectedDate, Number(selectedPeriod));
-            setFreeTeachers(res.data);
-        } catch (err) {
-            console.error(err);
-            alert("Error fetching free teachers");
-        }
+  useEffect(() => {
+    if (!schoolId) return;
+    const fetchData = async () => {
+      try {
+        const [c, t, s] = await Promise.all([ getAllClassrooms(schoolId), getAllTimetables(), getSubstitutionsByDate(selectedDate) ]);
+        setClassrooms(c.data); setTimetables(t.data); setSubstitutions(s.data);
+      } catch (err) { console.error(err); } finally { setLoading(false); }
     };
+    fetchData();
+  }, [schoolId, selectedDate]);
 
-    const handleAddSubstitution = async () => {
-        if (!selectedClassId || !selectedPeriod || !selectedSubstituteId) {
-            alert("Fill all fields");
-            return;
-        }
+  const findFreeTeachersForPeriod = async () => {
+    if (!selectedDate || !selectedPeriod) return alert("Boundaries lacking");
+    const dayName = daysOfWeek[new Date(selectedDate).getDay()];
+    if (dayName === "SUN") return alert("No operations on Sunday");
+    try { const res = await getFreeTeachers(selectedDate, Number(selectedPeriod)); setFreeTeachers(res.data); } catch (err) { alert("Failed cross-reference"); }
+  };
 
-        const dayName = daysOfWeek[new Date(selectedDate).getDay()];
-        const ttEntry = timetables.find(t =>
-            t.classroomId === Number(selectedClassId) &&
-            t.dayOfWeek === dayName &&
-            t.periodNumber === Number(selectedPeriod)
-        );
+  const handleAddSubstitution = async () => {
+    if (!selectedClassId || !selectedPeriod || !selectedSubstituteId) return alert("Fill core fields");
+    const dayName = daysOfWeek[new Date(selectedDate).getDay()];
+    const ttEntry = timetables.find(t => t.classroomId === Number(selectedClassId) && t.dayOfWeek === dayName && t.periodNumber === Number(selectedPeriod));
+    if (!ttEntry) return alert("Form has empty block here");
+    
+    try {
+      await createSubstitution({ timetableId: ttEntry.timetableId, date: selectedDate, originalTeacherId: ttEntry.teacherId, substituteTeacherId: Number(selectedSubstituteId), reason: reason || "Absent" });
+      const res = await getSubstitutionsByDate(selectedDate); setSubstitutions(res.data);
+      setSelectedSubstituteId(""); setReason(""); setFreeTeachers([]);
+    } catch (err) { alert("Commit failure"); }
+  };
 
-        if (!ttEntry) {
-            alert("No class scheduled for this classroom at this period");
-            return;
-        }
+  const handleDelete = async (id) => {
+    if (!window.confirm("Purge substitution logic?")) return;
+    try { await deleteSubstitution(id); setSubstitutions(substitutions.filter(s => s.substitutionId !== id)); } catch(err){}
+  };
 
-        const payload = {
-            timetableId: ttEntry.timetableId,
-            date: selectedDate,
-            originalTeacherId: ttEntry.teacherId,
-            substituteTeacherId: Number(selectedSubstituteId),
-            reason: reason || "Absent"
-        };
+  if (loading) return <div style={{textAlign:"center", padding:100, color:"var(--text-tertiary)"}}>Parsing contingency logic...</div>;
 
-        try {
-            await createSubstitution(payload);
-            alert("Substitution added");
-            const res = await getSubstitutionsByDate(selectedDate);
-            setSubstitutions(res.data);
-            // Reset
-            setSelectedSubstituteId("");
-            setReason("");
-        } catch (err) {
-            console.error(err);
-            alert("Error saving substitution");
-        }
-    };
+  return (
+    <div style={{ maxWidth: 1100, margin: "0 auto", paddingBottom: 60 }}>
+       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:32 }}>
+          <div>
+            <h1 style={{ fontSize:32, fontWeight:900, color:"var(--text-primary)", letterSpacing:"-0.03em", margin:"0 0 6px", fontFamily:"'Outfit', sans-serif" }}>Contingency Placements</h1>
+            <p style={{ margin:0, fontSize:14, color:"var(--text-secondary)", fontWeight:500 }}>Establish bypass personnel for missing elements.</p>
+          </div>
+          <div style={{ display:"flex", alignItems:"center", gap:12, background:"var(--surface-1)", padding:"8px 16px", borderRadius:16, border:"1px solid var(--border-medium)" }}>
+             <label style={{ fontSize:11, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase" }}>Time Vector</label>
+             <input type="date" value={selectedDate} onChange={e=>setSelectedDate(e.target.value)} style={{ border:"none", background:"transparent", outline:"none", fontWeight:800, color:"var(--primary-color)" }} />
+          </div>
+       </div>
 
-    const handleDelete = async (id) => {
-        if (!window.confirm("Delete this substitution?")) return;
-        try {
-            await deleteSubstitution(id);
-            setSubstitutions(substitutions.filter(s => s.substitutionId !== id));
-        } catch (err) {
-            console.error(err);
-        }
-    };
+       <div style={{ background:"var(--surface-1)", borderRadius:24, padding:32, marginBottom:40, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)" }}>
+          <h3 style={{ fontSize:16, fontWeight:800, margin:"0 0 24px" }}>Probe for Relief Factors</h3>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr auto", gap:20, alignItems:"end", marginBottom:24 }}>
+             <div>
+                <label style={{ display:"block", fontSize:11, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Vulnerable Block</label>
+                <select value={selectedClassId} onChange={e=>setSelectedClassId(e.target.value)} className="form-input" style={{ width:"100%", borderRadius:12 }}>
+                   <option value="">Select Frame</option>
+                   {classrooms.map(c => <option key={c.classId} value={c.classId}>{c.name} {c.section}</option>)}
+                </select>
+             </div>
+             <div>
+                <label style={{ display:"block", fontSize:11, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Period Slice</label>
+                <select value={selectedPeriod} onChange={e=>setSelectedPeriod(e.target.value)} className="form-input" style={{ width:"100%", borderRadius:12 }}>
+                   <option value="">Select Period</option>
+                   {periods.map(p => <option key={p} value={p}>Period {p}</option>)}
+                </select>
+             </div>
+             <button onClick={findFreeTeachersForPeriod} style={{ padding:16, background:"rgba(59,130,246,0.1)", color:"#3b82f6", borderRadius:12, fontWeight:800, border:"none", cursor:"pointer" }}>
+                Scan Available Personnel
+             </button>
+          </div>
 
-    return (
-        <div className="substitution-page-wrapper">
-            <div style={{ padding: "20px" }}>
-                <h2>Manage Daily Substitutions</h2>
-
-                <div className="premium-card" style={{ marginBottom: '24px', padding: '24px' }}>
-                    <h3 style={{ marginBottom: '20px' }}>Add New Substitution</h3>
-                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '20px' }}>
-                        <label style={{ fontWeight: '600' }}>Date: </label>
-                        <input type="date" className="modern-input" style={{ width: 'auto', margin: 0 }} value={selectedDate} onChange={handleDateChange} />
-                    </div>
-
-                    <div style={styles.formGrid}>
-                        <div style={styles.formGroup}>
-                            <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700' }}>Classroom</label>
-                            <select className="modern-input" value={selectedClassId} onChange={e => setSelectedClassId(e.target.value)}>
-                                <option value="">Select Class</option>
-                                {classrooms.map(c => (
-                                    <option key={c.classId} value={c.classId}>{c.name} {c.section}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div style={styles.formGroup}>
-                            <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700' }}>Period</label>
-                            <select className="modern-input" value={selectedPeriod} onChange={e => setSelectedPeriod(e.target.value)}>
-                                <option value="">Select Period</option>
-                                {periods.map(p => <option key={p} value={p}>{p}</option>)}
-                            </select>
-                        </div>
-
-                        <button className="modern-btn btn-outline" onClick={findFreeTeachersForPeriod} style={{ height: '42px' }}>Find Free Teachers</button>
-                    </div>
-
-                    {freeTeachers.length > 0 && (
-                        <div style={{ ...styles.formGrid, borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
-                            <div style={styles.formGroup}>
-                                <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700' }}>Substitute Teacher</label>
-                                <select className="modern-input" value={selectedSubstituteId} onChange={e => setSelectedSubstituteId(e.target.value)}>
-                                    <option value="">Select Teacher</option>
-                                    {freeTeachers.map(t => <option key={t.userId} value={t.userId}>{t.name}</option>)}
-                                </select>
-                            </div>
-                            <div style={styles.formGroup}>
-                                <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700' }}>Reason</label>
-                                <input type="text" className="modern-input" value={reason} onChange={e => setReason(e.target.value)} placeholder="Reason (Optional)" />
-                            </div>
-                            <button className="modern-btn btn-primary" onClick={handleAddSubstitution} style={{ height: '42px' }}>Assign Substitution</button>
-                        </div>
-                    )}
+          {freeTeachers.length > 0 && (
+             <div style={{ background:"rgba(16,185,129,0.05)", border:"1px solid rgba(16,185,129,0.2)", borderRadius:16, padding:24, animation:"slideDown 0.3s ease" }}>
+                <h4 style={{ margin:"0 0 16px", fontSize:14, fontWeight:800, color:"#10b981", display:"flex", alignItems:"center", gap:8 }}><span>✓</span> Optimal Agents Found</h4>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr auto", gap:20, alignItems:"end" }}>
+                   <div>
+                      <select value={selectedSubstituteId} onChange={e=>setSelectedSubstituteId(e.target.value)} className="form-input" style={{ width:"100%", borderRadius:12 }}>
+                         <option value="">Choose Agent</option>
+                         {freeTeachers.map(t => <option key={t.userId} value={t.userId}>{t.name}</option>)}
+                      </select>
+                   </div>
+                   <div>
+                      <input type="text" placeholder="Deviation Reason Tag" value={reason} onChange={e=>setReason(e.target.value)} className="form-input" style={{ width:"100%", borderRadius:12 }} />
+                   </div>
+                   <button onClick={handleAddSubstitution} style={{ padding:16, background:"#10b981", color:"white", borderRadius:12, fontWeight:800, border:"none", cursor:"pointer", boxShadow:"0 8px 24px rgba(16,185,129,0.3)" }}>
+                      Execute Bypass
+                   </button>
                 </div>
+             </div>
+          )}
+       </div>
 
-                <div className="premium-card" style={{ padding: '0', overflow: 'hidden' }}>
-                    <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)' }}>
-                        <h3 style={{ margin: 0 }}>Active Substitutions for {selectedDate}</h3>
-                    </div>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead style={{ background: 'rgba(30, 136, 229, 0.05)' }}>
-                            <tr>
-                                <th style={{ padding: '16px', textAlign: 'left' }}>Class</th>
-                                <th style={{ padding: '16px', textAlign: 'center' }}>Period</th>
-                                <th style={{ padding: '16px', textAlign: 'left' }}>Substitute</th>
-                                <th style={{ padding: '16px', textAlign: 'left' }}>Reason</th>
-                                <th style={{ padding: '16px', textAlign: 'right' }}>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {substitutions.map(s => {
-                                const tt = timetables.find(t => t.timetableId === s.timetableId);
-                                const clsName = classrooms.find(c => c.classId === tt?.classroomId)?.name || "N/A";
-                                const teacherName = freeTeachers.find(t => t.userId === s.substituteTeacherId)?.name || "Teacher ID: " + s.substituteTeacherId;
-                                return (
-                                    <tr key={s.substitutionId} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                        <td style={{ padding: '16px' }}>{clsName}</td>
-                                        <td style={{ padding: '16px', textAlign: 'center' }}>{tt?.periodNumber}</td>
-                                        <td style={{ padding: '16px' }}>{teacherName}</td>
-                                        <td style={{ padding: '16px' }}>{s.reason}</td>
-                                        <td style={{ padding: '16px', textAlign: 'right' }}>
-                                            <button className="modern-btn btn-outline" onClick={() => handleDelete(s.substitutionId)} style={{ color: '#ef4444', borderColor: '#fecaca', padding: '6px 12px' }}>Remove</button>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                            {substitutions.length === 0 && <tr><td colSpan="5" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic' }}>No substitutions found for this date</td></tr>}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const styles = {
-    card: {
-        backgroundColor: "white",
-        padding: "20px",
-        borderRadius: "10px",
-        boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-        marginBottom: "20px",
-    },
-    formGroup: {
-        marginBottom: "15px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "5px"
-    },
-    formGrid: {
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr auto",
-        gap: "20px",
-        alignItems: "end",
-        marginBottom: "20px"
-    },
-    btnAction: {
-        padding: "10px 15px",
-        backgroundColor: "#2196F3",
-        color: "white",
-        border: "none",
-        borderRadius: "5px",
-        cursor: "pointer"
-    },
-    btnSuccess: {
-        padding: "10px 15px",
-        backgroundColor: "#4CAF50",
-        color: "white",
-        border: "none",
-        borderRadius: "5px",
-        cursor: "pointer"
-    },
-    btnDanger: {
-        padding: "5px 10px",
-        backgroundColor: "#f44336",
-        color: "white",
-        border: "none",
-        borderRadius: "3px",
-        cursor: "pointer"
-    },
-    table: {
-        width: "100%",
-        borderCollapse: "collapse",
-        marginTop: "10px",
-        textAlign: "left"
-    }
+       <div style={{ background:"var(--surface-1)", borderRadius:24, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)", overflow:"hidden" }}>
+          <div style={{ padding:"24px", background:"var(--surface-2)", borderBottom:"1px solid var(--border-light)" }}>
+             <h3 style={{ margin:0, fontSize:16, fontWeight:800, color:"var(--text-primary)" }}>Instantiated Bypasses ({selectedDate})</h3>
+          </div>
+          <table style={{ width:"100%", borderCollapse:"collapse" }}>
+             <thead><tr>
+                <th style={{ padding:"16px 24px", textAlign:"left", fontSize:11, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase", borderBottom:"1px solid var(--border-subtle)" }}>Node Frame</th>
+                <th style={{ padding:"16px 24px", textAlign:"center", fontSize:11, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase", borderBottom:"1px solid var(--border-subtle)" }}>Period</th>
+                <th style={{ padding:"16px 24px", textAlign:"left", fontSize:11, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase", borderBottom:"1px solid var(--border-subtle)" }}>Relief Agent</th>
+                <th style={{ padding:"16px 24px", textAlign:"left", fontSize:11, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase", borderBottom:"1px solid var(--border-subtle)" }}>Tag</th>
+                <th style={{ padding:"16px 24px", textAlign:"right", fontSize:11, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase", borderBottom:"1px solid var(--border-subtle)" }}>Action</th>
+             </tr></thead>
+             <tbody>
+                {substitutions.length===0 ? <tr><td colSpan={5} style={{ padding:60, textAlign:"center", color:"var(--text-tertiary)" }}>No functional bypass blocks detected.</td></tr> : substitutions.map((s, i) => {
+                   const tt = timetables.find(t => t.timetableId === s.timetableId);
+                   const cls = classrooms.find(c => c.classId === tt?.classroomId)?.name || "Unknown";
+                   const agt = freeTeachers.find(t => t.userId === s.substituteTeacherId)?.name || `ID:${s.substituteTeacherId}`;
+                   return (
+                      <tr key={s.substitutionId} style={{ borderBottom:"1px solid var(--border-subtle)", animation:`pageEnter 0.3s ease ${i*15}ms both` }}>
+                         <td style={{ padding:"16px 24px", fontSize:14, fontWeight:800, color:"var(--text-primary)" }}>{cls}</td>
+                         <td style={{ padding:"16px 24px", fontSize:14, fontWeight:800, color:"#8b5cf6", textAlign:"center" }}>{tt?.periodNumber}</td>
+                         <td style={{ padding:"16px 24px", fontSize:14, fontWeight:600, color:"var(--text-secondary)" }}>{agt}</td>
+                         <td style={{ padding:"16px 24px", fontSize:13, color:"var(--text-tertiary)" }}>{s.reason}</td>
+                         <td style={{ padding:"16px 24px", textAlign:"right" }}>
+                            <button onClick={()=>handleDelete(s.substitutionId)} style={{ padding:"6px 14px", borderRadius:99, background:"transparent", border:"1px solid #fecaca", color:"#ef4444", fontSize:11, fontWeight:800, cursor:"pointer" }} onMouseEnter={e=>e.currentTarget.style.background="#fef2f2"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Tear</button>
+                         </td>
+                      </tr>
+                   );
+                })}
+             </tbody>
+          </table>
+       </div>
+    </div>
+  );
 };
 
 export default Substitution;

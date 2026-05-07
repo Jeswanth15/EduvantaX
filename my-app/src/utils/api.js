@@ -349,11 +349,21 @@ export const getBusStatus = (studentId) =>
 export const updateStudentType = (studentId, type) =>
   axios.post(`${API_BASE}/transport/admin/update-student-type?studentId=${studentId}&type=${type}`, null, config());
 
-export const assignStudentStop = (studentId, stopId) =>
-  axios.post(`${API_BASE}/transport/admin/assign-student-stop?studentId=${studentId}&stopId=${stopId}`, null, config());
+export const assignStudentStop = (studentId, stopId) => axios.post(`${API_BASE}/transport/admin/assign-student-stop?studentId=${studentId}&stopId=${stopId}`, null, config());
+
 
 export const getAllStudents = (schoolId) =>
   axios.get(`${API_BASE}/transport/admin/all-students/${schoolId}`, config());
 
-export const getTripSummary = () =>
-  axios.get(`${API_BASE}/transport/admin/trip-summary`, config());
+export const getTripSummaries = () =>
+  axios.get(`${API_BASE}/transport/admin/trip-summaries`, config());
+
+// Proposed Stops API
+export const proposeStop = (userId, stopName, lat, lng) => 
+  axios.post(`${API_BASE}/transport/driver/propose-stop/${userId}?stopName=${encodeURIComponent(stopName)}&lat=${lat}&lng=${lng}`, null, config());
+export const getProposedStops = () => 
+  axios.get(`${API_BASE}/transport/admin/proposed-stops`, config());
+export const approveProposedStop = (stopId, order) => 
+  axios.put(`${API_BASE}/transport/admin/approve-stop/${stopId}?order=${order}`, null, config());
+export const deleteStop = (stopId) => 
+  axios.delete(`${API_BASE}/transport/admin/stop/${stopId}`, config());
