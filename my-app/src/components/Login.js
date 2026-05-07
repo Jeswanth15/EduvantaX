@@ -108,7 +108,7 @@ const Login = () => {
               <path d="M2 12l10 5 10-5" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" fill="none" />
             </svg>
           </div>
-          <span style={S.logoText}>NexusEdu</span>
+          <span style={S.logoText}>EduvantaX</span>
         </div>
 
         {/* Heading */}
@@ -217,18 +217,13 @@ const Login = () => {
 
 const S = {
   page: {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "linear-gradient(135deg, #0a0f1e 0%, #0d1b3e 40%, #0f172a 100%)",
-    position: "relative",
-    overflow: "hidden",
-    padding: 20,
+    minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+    background: "radial-gradient(circle at top right, #1e1b4b 0%, #0f172a 100%)",
+    position: "relative", overflow: "hidden", padding: 20,
   },
   bgGrad: {
     position: "absolute", inset: 0,
-    background: "radial-gradient(ellipse 80% 60% at 20% 40%, rgba(37,99,235,0.18) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 70%, rgba(124,58,237,0.14) 0%, transparent 60%)",
+    background: "radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%)",
     pointerEvents: "none",
   },
   bgBlob1: {
@@ -254,16 +249,11 @@ const S = {
   },
   card: {
     position: "relative",
-    background: "rgba(255,255,255,0.05)",
-    backdropFilter: "blur(40px) saturate(200%)",
-    WebkitBackdropFilter: "blur(40px) saturate(200%)",
-    border: "1px solid rgba(255,255,255,0.1)",
-    borderRadius: 28,
-    padding: "44px 40px",
-    width: "100%",
-    maxWidth: 420,
-    boxShadow: "0 40px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)",
-    overflow: "hidden",
+    background: "rgba(30, 27, 75, 0.4)",
+    backdropFilter: "blur(40px) saturate(180%)", WebkitBackdropFilter: "blur(40px) saturate(180%)",
+    border: "1px solid rgba(255,255,255,0.12)", borderRadius: 32,
+    padding: "48px 44px", width: "100%", maxWidth: 420,
+    boxShadow: "0 40px 100px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.12)", overflow: "hidden",
   },
   cardShine: {
     position: "absolute", top: 0, left: "-100%",

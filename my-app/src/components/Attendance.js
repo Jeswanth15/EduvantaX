@@ -165,7 +165,7 @@ const Attendance = ({ isTeacher = false }) => {
         </div>
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"320px 1fr", gap:28, alignItems:"start" }}>
+      <div className="responsive-grid-side">
         
         {/* Left Column (Filters) */}
         <div style={{ display:"flex", flexDirection:"column", gap:24 }}>

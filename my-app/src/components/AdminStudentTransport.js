@@ -53,6 +53,7 @@ const AdminStudentTransport = () => {
        </div>
 
        <div style={{ background:"var(--surface-1)", borderRadius:24, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)", overflow:"hidden" }}>
+        <div className="table-scroll-wrapper">
           <table style={{ width:"100%", borderCollapse:"collapse" }}>
              <thead><tr>
                 <th style={{ padding:"16px 32px", textAlign:"left", fontSize:11, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase", borderBottom:"1px solid var(--border-subtle)" }}>Identity</th>
@@ -81,6 +82,7 @@ const AdminStudentTransport = () => {
                 ))}
              </tbody>
           </table>
+        </div>
        </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getDecodedToken, logout } from "../utils/authHelper";
 import { useTranslation } from "react-i18next";
@@ -65,7 +65,6 @@ const ROLE_CONFIGS = {
           { to: "/student/assignments", label: "Assignments", icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" },
           { to: "/student/attendance", label: "My Attendance", icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" },
           { to: "/student/syllabus", label: "View Syllabus", icon: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20" },
-          { to: "/student/substitutions", label: "Substitutions", icon: "M8 7h12m0 0-4-4m4 4-4 4M4 17h12" },
           { to: "/student/practice", label: "Practice Zone", icon: "M9.663 17h4.673M12 3v1m6.364 1.636-.707.707M21 12h-1M4 12H3M6.343 6.343l-.707-.707M17.657 6.343l.707-.707M6.343 17.657l-.707.707M17.657 17.657l.707.707M12 5a7 7 0 0 1 0 14 7 7 0 0 1 0-14z" },
           { to: "/student/bus-tracking", label: "Bus Tracking", icon: "M8 6v6M15 6v6M2 12h19.6M18 18H2M16.8 22a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM7 22a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" },
         ],
@@ -98,6 +97,7 @@ const Sidebar = () => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [hoveredLink, setHoveredLink] = useState("");
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
   const decoded = getDecodedToken();
   const location = useLocation();
   const navigate = useNavigate();
@@ -109,33 +109,48 @@ const Sidebar = () => {
 
   const isActive = (path) => location.pathname === path;
 
+  useEffect(() => {
+    const handleResize = () => {
+      const desktop = window.innerWidth >= 1024;
+      setIsDesktop(desktop);
+      if (desktop) setIsOpen(false); // close drawer when resizing to desktop
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // On desktop sidebar is always visible; on mobile it's a drawer
+  const sidebarVisible = isDesktop || isOpen;
+
   return (
     <>
-      {/* Hamburger toggle */}
-      <button
-        id="sidebar-toggle"
-        onClick={() => setIsOpen(o => !o)}
-        style={{
-          position: "fixed", top: 16, left: 20, zIndex: 2100,
-          width: 38, height: 38, borderRadius: 10,
-          background: isOpen ? "rgba(37,99,235,0.9)" : "rgba(255,255,255,0.08)",
-          backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.12)",
-          color: "white", cursor: "pointer",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          transition: "all 0.25s ease",
-          boxShadow: isOpen ? "0 4px 16px rgba(37,99,235,0.4)" : "0 2px 8px rgba(0,0,0,0.2)",
-        }}
-        aria-label="Toggle navigation"
-      >
-        {isOpen ? (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        ) : (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-        )}
-      </button>
+      {/* Hamburger toggle — only on mobile */}
+      {!isDesktop && (
+        <button
+          id="sidebar-toggle"
+          onClick={() => setIsOpen(o => !o)}
+          style={{
+            position: "fixed", top: 16, left: 20, zIndex: 2100,
+            width: 38, height: 38, borderRadius: 10,
+            background: isOpen ? "rgba(37,99,235,0.9)" : "rgba(15,23,42,0.85)",
+            backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.12)",
+            color: "white", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            transition: "all 0.25s ease",
+            boxShadow: isOpen ? "0 4px 16px rgba(37,99,235,0.4)" : "0 2px 8px rgba(0,0,0,0.2)",
+          }}
+          aria-label="Toggle navigation"
+        >
+          {isOpen ? (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          )}
+        </button>
+      )}
 
-      {/* Backdrop */}
-      {isOpen && (
+      {/* Backdrop — only on mobile when open */}
+      {!isDesktop && isOpen && (
         <div
           onClick={() => setIsOpen(false)}
           style={{
@@ -150,20 +165,25 @@ const Sidebar = () => {
       {/* Sidebar panel */}
       <nav
         style={{
-          position: "fixed", top: 0, left: isOpen ? 0 : -276,
-          width: 276, height: "100dvh",
+          position: isDesktop ? "sticky" : "fixed",
+          top: 0,
+          left: isDesktop ? 0 : (sidebarVisible ? 0 : -276),
+          width: 276,
+          height: isDesktop ? "100vh" : "100dvh",
+          flexShrink: 0,
           background: "linear-gradient(180deg, #090e1a 0%, #0d1526 100%)",
           borderRight: "1px solid rgba(255,255,255,0.06)",
-          zIndex: 1500, display: "flex", flexDirection: "column",
-          transition: "left 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-          boxShadow: isOpen ? "8px 0 40px rgba(0,0,0,0.4)" : "none",
+          zIndex: isDesktop ? 100 : 1500,
+          display: "flex", flexDirection: "column",
+          transition: isDesktop ? "none" : "left 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          boxShadow: (!isDesktop && sidebarVisible) ? "8px 0 40px rgba(0,0,0,0.4)" : "none",
           overflowY: "auto", overflowX: "hidden",
         }}
       >
         {/* Header */}
         <div style={{
           padding: "20px 20px 0",
-          paddingTop: 70,
+          paddingTop: isDesktop ? 20 : 70,
         }}>
           {/* School badge */}
           <div style={{

@@ -48,7 +48,7 @@ const Enrollment = () => {
           <p style={{ margin:0, fontSize:14, color:"var(--text-secondary)", fontWeight:500 }}>Bulk distribution of unassigned students into academic forms.</p>
        </div>
 
-       <div style={{ display:"grid", gridTemplateColumns:"340px 1fr", gap:32, alignItems:"start" }}>
+       <div className="responsive-grid-side">
           
           <div style={{ background:"var(--surface-1)", borderRadius:24, padding:32, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-md)", position:"sticky", top:20 }}>
              <h3 style={{ fontSize:16, fontWeight:800, margin:"0 0 24px", color:"var(--text-primary)" }}>Injection Pipeline</h3>

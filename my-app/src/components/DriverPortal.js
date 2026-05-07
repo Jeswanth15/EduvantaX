@@ -196,7 +196,7 @@ const DriverPortal = () => {
 
        {message && <div style={{ background:"var(--primary-color)", color:"white", padding:16, borderRadius:16, marginBottom:24, fontWeight:700, animation:"slideDown 0.3s ease" }}>{message}</div>}
 
-       <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr", gap:32, alignItems:"start" }}>
+       <div className="responsive-grid-2-1">
           
           <div style={{ display:"flex", flexDirection:"column", gap:24 }}>
              <div style={{ background:"var(--surface-1)", borderRadius:24, padding:20, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-md)" }}>

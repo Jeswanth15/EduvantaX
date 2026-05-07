@@ -65,7 +65,7 @@ const StudentBusTracking = () => {
          </div>
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 2fr", gap:32, flex:1 }}>
+      <div className="responsive-grid-1-2" style={{ flex:1 }}>
          
          <div style={{ display:"flex", flexDirection:"column", gap:24 }}>
             <div style={{ background:"linear-gradient(135deg, #0f172a, #1e293b)", padding:32, borderRadius:24, color:"white", boxShadow:"0 12px 32px rgba(15,23,42,0.4)" }}>

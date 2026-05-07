@@ -127,7 +127,7 @@ const SchoolAdmin = () => {
       </div>
 
       {/* ── Stats ── */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:18, marginBottom:32 }}>
+      <div className="grid-cols-4">
         {STATS.map((s, i) => (
           <div key={s.label} style={{
             background:`linear-gradient(135deg, ${s.bg}, transparent)`,
@@ -154,7 +154,7 @@ const SchoolAdmin = () => {
       </div>
 
       {/* ── Main grid ── */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1.2fr", gap:24 }}>
+      <div className="responsive-grid-main">
 
         {/* Create Announcement */}
         <div style={{ background:"var(--surface-1)", border:"1px solid var(--border-light)", borderRadius:20, overflow:"hidden", boxShadow:"var(--shadow-sm)" }}>

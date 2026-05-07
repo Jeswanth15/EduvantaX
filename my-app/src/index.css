@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
 
 /* ========================================
-   NEXUS EDU — WORLD-CLASS DESIGN SYSTEM
+   EDUVANTAX — WORLD-CLASS DESIGN SYSTEM
    ======================================== */
 
 :root {
@@ -971,12 +971,25 @@ select.modern-input {
   .grid-cols-4 { grid-template-columns: repeat(2, 1fr); }
 }
 
-@media screen and (max-width: 992px) {
+@media screen and (max-width: 1024px) {
+  /* All 2-column side+main layouts collapse */
+  [style*="gridTemplateColumns: \"320px 1fr\""],
+  [style*="gridTemplateColumns: \"340px 1fr\""],
+  [style*="gridTemplateColumns: \"380px 1fr\""],
+  [style*="gridTemplateColumns: \"1fr 340px\""],
+  [style*="gridTemplateColumns: \"1fr 320px\""] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Named CSS classes */
   .transport-grid-admin,
   .transport-grid-driver,
   .grid-cols-3,
   .grid-main-side,
   .grid-side-main { grid-template-columns: 1fr; }
+
+  /* Page-level named responsive helpers */
+  .page-grid-side { grid-template-columns: 1fr !important; }
 }
 
 @media screen and (max-width: 768px) {
@@ -984,12 +997,119 @@ select.modern-input {
   .grid-cols-2 { grid-template-columns: 1fr; }
   .page-wrapper { padding: var(--space-5) var(--space-4); }
   .page-title { font-size: 22px; }
+
+  /* Table horizontal scroll on mobile */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+  /* Keep table body readable */
+  table thead, table tbody, table tr, table th, table td {
+    display: revert;
+  }
+
+  /* Stat cards stack */
+  .grid-cols-4 { grid-template-columns: repeat(2, 1fr); }
+
+  /* Form grids go 1 col */
+  [style*="gridTemplateColumns: \"repeat(auto-fit, minmax(200px"] {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 @media screen and (max-width: 576px) {
   .grid-cols-4 { grid-template-columns: 1fr; }
   .section-card-body { padding: var(--space-4); }
+
+  /* All auto-fit grids go full width on very small screens */
+  [style*="gridTemplateColumns: \"repeat(auto-fit"] {
+    grid-template-columns: 1fr !important;
+  }
+  [style*="gridTemplateColumns: \"repeat(auto-fill"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Table wrapper */
+  .table-scroll-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius-xl);
+  }
 }
+
+/* ---- Utility class for responsive side+main layout ---- */
+.responsive-grid-side {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+@media (max-width: 1024px) {
+  .responsive-grid-side { grid-template-columns: 1fr; }
+}
+
+.responsive-grid-main {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 28px;
+}
+@media (max-width: 1024px) {
+  .responsive-grid-main { grid-template-columns: 1fr; }
+}
+
+.responsive-grid-transport {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 40px;
+  align-items: start;
+}
+@media (max-width: 1024px) {
+  .responsive-grid-transport { grid-template-columns: 1fr; }
+}
+
+.responsive-grid-2-1 {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 32px;
+}
+@media (max-width: 1024px) {
+  .responsive-grid-2-1 { grid-template-columns: 1fr; }
+}
+
+.responsive-grid-1-2 {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 32px;
+}
+@media (max-width: 1024px) {
+  .responsive-grid-1-2 { grid-template-columns: 1fr; }
+}
+
+.grid-2-col-responsive {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+@media (max-width: 768px) {
+  .grid-2-col-responsive { grid-template-columns: 1fr; }
+}
+
+/* Table always scrollable */
+.table-scroll-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+}
+.table-scroll-wrapper table {
+  display: table;
+  min-width: 600px;
+  white-space: nowrap;
+}
+
 
 /* ========================================
    ANIMATION UTILITIES

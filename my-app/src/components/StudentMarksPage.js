@@ -48,7 +48,7 @@ const StudentMarksPage = () => {
         <div style={{ background:"var(--surface-1)", border:"1px dashed var(--border-medium)", borderRadius:20, padding:80, textAlign:"center", color:"var(--text-secondary)" }}>No grades found in the system.</div>
       ) : (
         <div style={{ background:"var(--surface-1)", borderRadius:24, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)", overflow:"hidden" }}>
-           <div style={{ overflowX:"auto" }}>
+           <div className="table-scroll-wrapper">
               <table style={{ width:"100%", borderCollapse:"collapse" }}>
                  <thead>
                     <tr>

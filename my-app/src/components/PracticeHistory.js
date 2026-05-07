@@ -24,6 +24,7 @@ const PracticeHistory = () => {
             </div>
 
             <div style={{ background:"var(--surface-1)", borderRadius:24, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)", overflow:"hidden" }}>
+            <div className="table-scroll-wrapper">
                 <table style={{ width:"100%", borderCollapse:"collapse" }}>
                     <thead style={{ background:"var(--surface-2)" }}>
                         <tr>
@@ -56,6 +57,7 @@ const PracticeHistory = () => {
                         })}
                     </tbody>
                 </table>
+            </div>
             </div>
         </div>
     );

@@ -27,7 +27,7 @@ const Navbar = () => {
           fontSize: 14, fontWeight: 800,
           color: "var(--text-primary)", letterSpacing: "-0.02em",
           fontFamily: "'Outfit', sans-serif",
-        }}>NexusEdu</span>
+        }}>EduvantaX</span>
       </div>
     </div>
   );

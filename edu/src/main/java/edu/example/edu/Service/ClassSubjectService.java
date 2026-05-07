@@ -94,6 +94,26 @@ public class ClassSubjectService {
                 .collect(Collectors.toList());
     }
 
+    // Update teacher for an existing class-subject assignment
+    public ClassSubjectDTO updateTeacher(Long id, Long teacherId) {
+        ClassSubject cs = classSubjectRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("ClassSubject not found"));
+
+        if (teacherId == null) {
+            cs.setTeacher(null);
+        } else {
+            User teacher = userRepository.findById(teacherId)
+                    .orElseThrow(() -> new RuntimeException("Teacher not found"));
+            if (!teacher.getRole().name().equals("TEACHER")) {
+                throw new RuntimeException("User with id " + teacherId + " is not a teacher");
+            }
+            cs.setTeacher(teacher);
+        }
+
+        ClassSubject saved = classSubjectRepository.save(cs);
+        return convertToDTO(saved);
+    }
+
     // Delete subject assignment
     public void deleteSubject(Long id) {
         classSubjectRepository.deleteById(id);

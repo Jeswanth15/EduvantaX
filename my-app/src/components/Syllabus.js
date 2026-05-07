@@ -105,7 +105,7 @@ const Syllabus = () => {
         </div>
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"340px 1fr", gap:28, alignItems:"start" }}>
+      <div className="responsive-grid-side">
         
         {/* Left Col */}
         <div style={{ display:"flex", flexDirection:"column", gap:20, position:"sticky", top:20 }}>

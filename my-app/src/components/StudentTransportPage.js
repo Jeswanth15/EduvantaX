@@ -99,7 +99,7 @@ const StudentTransportPage = () => {
       </div>
 
       {error ? <div style={{ background:"#fef2f2", border:"1px solid #fecaca", color:"#ef4444", padding:20, borderRadius:16, fontWeight:600 }}>{error}</div> : status ? (
-        <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr", gap:32, flex:1 }}>
+        <div className="responsive-grid-2-1" style={{ flex:1 }}>
            
            {/* Map Canvas */}
            <div style={{ background:"var(--surface-1)", borderRadius:24, border:"4px solid white", boxShadow:"0 20px 40px rgba(0,0,0,0.1)", overflow:"hidden", position:"relative" }}>
@@ -121,7 +121,7 @@ const StudentTransportPage = () => {
                     <div style={{ fontSize:18, fontWeight:800, color:"var(--text-primary)" }}>{status.tripStatus.replace("_", " ")}</div>
                  </div>
 
-                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:24 }}>
+                 <div className="grid-2-col-responsive" style={{ gap:16, marginBottom:24 }}>
                     <div style={{ background:"var(--surface-2)", padding:16, borderRadius:16, border:"1px solid var(--border-light)" }}>
                        <div style={{ fontSize:11, fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Est. Time</div>
                        <div style={{ fontSize:24, fontWeight:900, color:"var(--primary-color)" }}>{status.estimatedMinutes ? `${Math.round(status.estimatedMinutes)}m` : "--"}</div>

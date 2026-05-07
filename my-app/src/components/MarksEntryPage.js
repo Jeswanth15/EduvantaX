@@ -117,7 +117,7 @@ const MarksEntryPage = () => {
           </div>
           
           {loading ? <div style={{padding:40, textAlign:"center"}}>Loading registry...</div> : !students.length ? <div style={{padding:40, textAlign:"center"}}>Empty roster.</div> : (
-            <div style={{ overflowX:"auto" }}>
+            <div className="table-scroll-wrapper">
               <table style={{ width:"100%", borderCollapse:"collapse" }}>
                 <thead>
                   <tr>
@@ -157,7 +157,7 @@ const MarksEntryPage = () => {
               <button onClick={()=>setShowAllMarks(false)} style={{ background:"rgba(255,255,255,0.1)", border:"1px solid rgba(255,255,255,0.2)", borderRadius:8, color:"white", padding:"6px 12px", cursor:"pointer", fontWeight:600 }}>Close View</button>
            </div>
            {allMarks.length === 0 ? <div style={{padding:40, textAlign:"center"}}>No records overall.</div> : (
-             <div style={{ overflowX:"auto" }}>
+             <div className="table-scroll-wrapper">
                 <table style={{ width:"100%", borderCollapse:"collapse" }}>
                   <thead>
                     <tr>

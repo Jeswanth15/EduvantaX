@@ -106,7 +106,7 @@ const Timetable = () => {
                <button onClick={handleSave} style={{ padding:"10px 20px", borderRadius:12, background:"var(--primary-color)", color:"white", fontWeight:800, border:"none", cursor:"pointer", boxShadow:"0 4px 12px rgba(37,99,235,0.2)" }}>Sync Pipeline</button>
             </div>
             
-            <div style={{ overflowX:"auto" }}>
+            <div className="table-scroll-wrapper">
                <table style={{ width:"100%", borderCollapse:"collapse", minWidth:900 }}>
                   <thead><tr>
                      <th style={{ width:100, padding:"20px", backgroundColor:"var(--surface-2)", borderBottom:"1px solid var(--border-medium)", borderRight:"1px solid var(--border-medium)" }}>DAY / PRD</th>

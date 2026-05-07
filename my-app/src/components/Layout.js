@@ -57,6 +57,7 @@ const Layout = ({ children }) => {
   const decoded = getDecodedToken();
   const [scrolled, setScrolled] = useState(false);
   const [time, setTime] = useState(new Date());
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
 
   const userRole = decoded?.role || "";
   const config = ROLE_CONFIGS[userRole] || { color: "#60a5fa", label: userRole, emoji: "👤" };
@@ -68,6 +69,12 @@ const Layout = ({ children }) => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const onResize = () => setIsDesktop(window.innerWidth >= 1024);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   useEffect(() => {
@@ -87,15 +94,15 @@ const Layout = ({ children }) => {
       <Sidebar />
 
       {/* Main content area */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
 
         {/* ── Top Header Bar ── */}
         <header style={{
           position: "sticky", top: 0, zIndex: 300,
           height: 60,
           display: "flex", alignItems: "center",
-          padding: "0 28px",
-          gap: 16,
+          padding: isDesktop ? "0 28px" : "0 16px 0 64px",
+          gap: isDesktop ? 16 : 10,
           background: scrolled
             ? "var(--glass-bg-heavy)"
             : "var(--surface-1)",
@@ -105,8 +112,7 @@ const Layout = ({ children }) => {
           boxShadow: scrolled ? "0 2px 16px rgba(0,0,0,0.06)" : "none",
           transition: "all 0.25s ease",
         }}>
-          {/* Spacer for hamburger */}
-          <div style={{ width: 54, flexShrink: 0 }} />
+          {/* No spacer needed — padding already offsets for hamburger on mobile */}
 
           {/* Breadcrumb / Page title */}
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -127,18 +133,20 @@ const Layout = ({ children }) => {
           </div>
 
           {/* Right side */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: isDesktop ? 12 : 8, flexShrink: 0 }}>
 
-            {/* Clock */}
-            <div style={{
-              display: "flex", flexDirection: "column", alignItems: "flex-end",
-              padding: "5px 12px", borderRadius: 8,
-              background: "var(--surface-2)",
-              border: "1px solid var(--border-subtle)",
-            }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.2, fontFamily: "var(--font-mono)" }}>{timeStr}</span>
-              <span style={{ fontSize: 10, color: "var(--text-tertiary)", fontWeight: 500 }}>{dateStr}</span>
-            </div>
+            {/* Clock — hide on small screens */}
+            {isDesktop && (
+              <div style={{
+                display: "flex", flexDirection: "column", alignItems: "flex-end",
+                padding: "5px 12px", borderRadius: 8,
+                background: "var(--surface-2)",
+                border: "1px solid var(--border-subtle)",
+              }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.2, fontFamily: "var(--font-mono)" }}>{timeStr}</span>
+                <span style={{ fontSize: 10, color: "var(--text-tertiary)", fontWeight: 500 }}>{dateStr}</span>
+              </div>
+            )}
 
             {/* Back button */}
             <button
@@ -154,22 +162,24 @@ const Layout = ({ children }) => {
               onMouseLeave={e => { e.currentTarget.style.background = "var(--surface-2)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-              Back
+              {isDesktop && "Back"}
             </button>
 
-            {/* Role badge */}
-            <div style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "6px 12px 6px 8px", borderRadius: 8,
-              background: `${config.color}12`,
-              border: `1px solid ${config.color}25`,
-            }}>
-              <span style={{ fontSize: 14 }}>{config.emoji}</span>
-              <div>
-                <div style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 500, lineHeight: 1 }}>Signed in as</div>
-                <div style={{ fontSize: 12.5, fontWeight: 700, color: config.color, lineHeight: 1.3 }}>{config.label}</div>
+            {/* Role badge — hide on mobile */}
+            {isDesktop && (
+              <div style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "6px 12px 6px 8px", borderRadius: 8,
+                background: `${config.color}12`,
+                border: `1px solid ${config.color}25`,
+              }}>
+                <span style={{ fontSize: 14 }}>{config.emoji}</span>
+                <div>
+                  <div style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 500, lineHeight: 1 }}>Signed in as</div>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: config.color, lineHeight: 1.3 }}>{config.label}</div>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Logout */}
             <button
@@ -197,10 +207,11 @@ const Layout = ({ children }) => {
           className="fade-in"
           style={{
             flex: 1,
-            padding: "32px 28px",
+            padding: isDesktop ? "32px 28px" : "20px 16px",
             maxWidth: 1320,
             width: "100%",
             margin: "0 auto",
+            boxSizing: "border-box",
           }}
         >
           {children}
@@ -214,7 +225,7 @@ const Layout = ({ children }) => {
           background: "var(--surface-1)",
         }}>
           <span style={{ fontSize: 11.5, color: "var(--text-tertiary)", fontWeight: 500 }}>
-            © 2026 NexusEdu Platform — All rights reserved
+            © 2026 EduvantaX Platform — All rights reserved
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981", animation: "pulse-glow 2s ease-in-out infinite" }} />

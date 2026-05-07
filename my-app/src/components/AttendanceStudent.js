@@ -64,7 +64,7 @@ const AttendanceStudent = () => {
         </div>
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 2fr", gap:28, alignItems:"start" }}>
+      <div className="responsive-grid-1-2">
         
         {/* Left Col - Stats & Filters */}
         <div style={{ display:"flex", flexDirection:"column", gap:24, position:"sticky", top:20 }}>
@@ -91,7 +91,7 @@ const AttendanceStudent = () => {
                        {subjects.map(s=><option key={s.id} value={s.subjectId}>{s.subjectName}</option>)}
                     </select>
                  </div>
-                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+                 <div className="grid-2-col-responsive" style={{ gap:12 }}>
                     <div>
                       <label style={{ fontSize:11, fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", marginBottom:6, display:"block" }}>From</label>
                       <input type="date" value={fromDate} onChange={e=>setFromDate(e.target.value)} className="form-input" style={{ borderRadius:10, fontSize:12 }} />

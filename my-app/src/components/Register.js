@@ -92,7 +92,7 @@ const Register = () => {
               <path d="M2 17l10 5 10-5" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" />
             </svg>
           </div>
-          <span style={S.logoText}>NexusEdu</span>
+          <span style={S.logoText}>EduvantaX</span>
         </div>
 
         <div style={{ marginBottom: 28 }}>
@@ -211,10 +211,10 @@ const Register = () => {
                     style={{ ...inputStyle("school"), paddingLeft: 40, cursor: "pointer",
                       backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")",
                       backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", backgroundSize: 16,
-                      paddingRight: 36, appearance: "none", WebkitAppearance: "none" }}>
-                    <option value="" style={{ background: "#0f172a" }}>Choose your school…</option>
+                      paddingRight: 36, appearance: "none", WebkitAppearance: "none", color: "white" }}>
+                    <option value="" style={{ background: "#1e1b4b", color: "white" }}>Choose your school…</option>
                     {schools.map(s => (
-                      <option key={s.schoolId} value={s.schoolId} style={{ background: "#0f172a" }}>{s.name}</option>
+                      <option key={s.schoolId} value={s.schoolId} style={{ background: "#1e1b4b", color: "white" }}>{s.name}</option>
                     ))}
                   </select>
                 </div>
@@ -249,31 +249,31 @@ const Register = () => {
 const S = {
   page: {
     minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
-    background: "linear-gradient(135deg, #090e1a 0%, #0c1428 40%, #0f172a 100%)",
+    background: "radial-gradient(circle at top left, #1e1b4b 0%, #0f172a 100%)",
     position: "relative", overflow: "hidden", padding: 20,
   },
   bgGrad: {
     position: "absolute", inset: 0,
-    background: "radial-gradient(ellipse 70% 50% at 80% 30%, rgba(124,58,237,0.16) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 20% 70%, rgba(14,165,233,0.12) 0%, transparent 60%)",
+    background: "radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%), radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%)",
     pointerEvents: "none",
   },
   bgBlob1: {
-    position: "absolute", top: "-15%", right: "-5%", width: 500, height: 500, borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%)",
-    filter: "blur(40px)", pointerEvents: "none",
+    position: "absolute", top: "-10%", right: "-10%", width: 600, height: 600, borderRadius: "50%",
+    background: "radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%)",
+    filter: "blur(60px)", pointerEvents: "none",
   },
   bgBlob2: {
-    position: "absolute", bottom: "-10%", left: "-5%", width: 450, height: 450, borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(14,165,233,0.10) 0%, transparent 70%)",
-    filter: "blur(40px)", pointerEvents: "none",
+    position: "absolute", bottom: "-10%", left: "-10%", width: 500, height: 500, borderRadius: "50%",
+    background: "radial-gradient(circle, rgba(79, 70, 229, 0.12) 0%, transparent 70%)",
+    filter: "blur(60px)", pointerEvents: "none",
   },
   card: {
     position: "relative",
-    background: "rgba(255,255,255,0.05)",
-    backdropFilter: "blur(40px) saturate(200%)", WebkitBackdropFilter: "blur(40px) saturate(200%)",
-    border: "1px solid rgba(255,255,255,0.09)", borderRadius: 28,
-    padding: "40px 38px", width: "100%", maxWidth: 440,
-    boxShadow: "0 40px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.09)", overflow: "hidden",
+    background: "rgba(30, 27, 75, 0.4)",
+    backdropFilter: "blur(40px) saturate(180%)", WebkitBackdropFilter: "blur(40px) saturate(180%)",
+    border: "1px solid rgba(255,255,255,0.12)", borderRadius: 32,
+    padding: "48px 44px", width: "100%", maxWidth: 460,
+    boxShadow: "0 40px 100px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.12)", overflow: "hidden",
   },
   cardShine: {
     position: "absolute", top: 0, left: "-100%", width: "60%", height: "100%",
@@ -325,7 +325,7 @@ const S = {
     background: "none", border: "none", color: "rgba(148,163,184,0.6)",
     cursor: "pointer", padding: 4, display: "flex", alignItems: "center",
   },
-  roleGrid: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 },
+  roleGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 },
   roleBtn: {
     display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
     padding: "12px 8px", borderRadius: 10, cursor: "pointer",

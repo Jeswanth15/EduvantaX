@@ -234,7 +234,7 @@ const AdminPage = () => {
       </div>
 
       {/* ── Stat Cards ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20, marginBottom: 36 }}>
+      <div className="grid-cols-4">
         {STAT_CARDS.map((s, i) => (
           <StatCard key={s.label} {...s} delay={i * 80} />
         ))}
@@ -249,7 +249,7 @@ const AdminPage = () => {
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
+        <div className="grid-cols-3">
           {TOOLS.map((tool, i) => (
             <div
               key={tool.title}

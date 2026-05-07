@@ -48,7 +48,7 @@ const TeachingLog = () => {
         <p style={{ margin:0, fontSize:14, color:"var(--text-secondary)", fontWeight:500 }}>Immutable logs of daily instruction topics and pedagogy.</p>
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"320px 1fr", gap:28, alignItems:"start" }}>
+      <div className="responsive-grid-side">
         
         {/* Left Column */}
         <div style={{ display:"flex", flexDirection:"column", gap:24, position:"sticky", top:20 }}>

@@ -74,7 +74,7 @@ const ExamSchedulePage = () => {
         <p style={{ margin:0, fontSize:14, color:"var(--text-secondary)", fontWeight:500 }}>Schedule and allocate testing modules efficiently.</p>
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"320px 1fr", gap:28, alignItems:"start" }}>
+      <div className="responsive-grid-side">
         {/* Left pane: Form Config */}
         <div style={{ display:"flex", flexDirection:"column", gap:20, position:"sticky", top:20 }}>
            <div style={{ background:"var(--surface-1)", borderRadius:20, padding:24, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)" }}>

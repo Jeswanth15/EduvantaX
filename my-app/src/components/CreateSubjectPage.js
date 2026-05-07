@@ -36,7 +36,7 @@ const CreateSubjectPage = () => {
           <p style={{ margin:0, fontSize:14, color:"var(--text-secondary)", fontWeight:500 }}>Global catalog of academic programs and subjects.</p>
        </div>
 
-       <div style={{ display:"grid", gridTemplateColumns:"320px 1fr", gap:32, alignItems:"start" }}>
+       <div className="responsive-grid-side">
           
           {/* Creator form */}
           <div style={{ background:"var(--surface-1)", borderRadius:24, padding:32, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-md)", position:"sticky", top:20 }}>

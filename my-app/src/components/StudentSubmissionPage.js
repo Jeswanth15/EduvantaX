@@ -49,7 +49,7 @@ const StudentSubmissionPage = () => {
         <p style={{ margin:0, fontSize:14, color:"var(--text-secondary)", fontWeight:500 }}>Upload files and track your evaluator's feedback.</p>
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:32, alignItems:"start" }}>
+      <div className="grid-2-col-responsive" style={{ alignItems:"start" }}>
         
         {/* Left Col - Submitter */}
         <div style={{ display:"flex", flexDirection:"column", gap:24 }}>

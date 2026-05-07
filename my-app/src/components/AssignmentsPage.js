@@ -80,7 +80,7 @@ const AssignmentsPage = () => {
         </div>
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"340px 1fr", gap:28, alignItems:"start" }}>
+      <div className="responsive-grid-side">
         
         {/* Left Col (Filters & Create) */}
         <div style={{ display:"flex", flexDirection:"column", gap:24, position:"sticky", top:20 }}>

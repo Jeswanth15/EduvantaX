@@ -69,7 +69,7 @@ const StudentPage = () => {
         </div>
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 340px", gap:28 }}>
+      <div className="responsive-grid-main">
         
         {/* Main */}
         <div style={{ display:"flex", flexDirection:"column", gap:28 }}>
@@ -114,7 +114,7 @@ const StudentPage = () => {
         <div style={{ display:"flex", flexDirection:"column", gap:28 }}>
            <div style={{ background:"var(--surface-1)", borderRadius:20, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)", overflow:"hidden" }}>
              <h3 style={{ margin:0, fontSize:14, fontWeight:800, padding:"16px 20px", borderBottom:"1px solid var(--border-subtle)", color:"var(--text-primary)" }}>Quick Actions</h3>
-             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:1, background:"var(--border-subtle)" }}>
+             <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(130px, 1fr))", gap:1, background:"var(--border-subtle)" }}>
                {[
                  {l:"Coursework", i:"📚", r:"/student/assignments", c:"#3b82f6"},
                  {l:"My Grades", i:"💯", r:"/student/marks", c:"#10b981"},

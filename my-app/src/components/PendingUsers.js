@@ -111,7 +111,7 @@ const PendingUsers = () => {
           )}
        </div>
 
-       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:32 }}>
+       <div className="grid-2-col-responsive" style={{ gap:32 }}>
           <div>
              <h2 style={{ fontSize:18, fontWeight:800, color:"var(--text-primary)", marginBottom:20 }}>Active Staff</h2>
              <div style={{ background:"var(--surface-1)", borderRadius:24, border:"1px solid var(--border-light)", overflow:"hidden", boxShadow:"var(--shadow-sm)" }}>

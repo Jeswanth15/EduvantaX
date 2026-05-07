@@ -73,7 +73,7 @@ const Substitution = () => {
 
        <div style={{ background:"var(--surface-1)", borderRadius:24, padding:32, marginBottom:40, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)" }}>
           <h3 style={{ fontSize:16, fontWeight:800, margin:"0 0 24px" }}>Probe for Relief Factors</h3>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr auto", gap:20, alignItems:"end", marginBottom:24 }}>
+          <div className="grid-2-col-responsive" style={{ alignItems:"end", marginBottom:24 }}>
              <div>
                 <label style={{ display:"block", fontSize:11, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Vulnerable Block</label>
                 <select value={selectedClassId} onChange={e=>setSelectedClassId(e.target.value)} className="form-input" style={{ width:"100%", borderRadius:12 }}>
@@ -96,7 +96,7 @@ const Substitution = () => {
           {freeTeachers.length > 0 && (
              <div style={{ background:"rgba(16,185,129,0.05)", border:"1px solid rgba(16,185,129,0.2)", borderRadius:16, padding:24, animation:"slideDown 0.3s ease" }}>
                 <h4 style={{ margin:"0 0 16px", fontSize:14, fontWeight:800, color:"#10b981", display:"flex", alignItems:"center", gap:8 }}><span>✓</span> Optimal Agents Found</h4>
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr auto", gap:20, alignItems:"end" }}>
+                <div className="grid-2-col-responsive" style={{ alignItems:"end" }}>
                    <div>
                       <select value={selectedSubstituteId} onChange={e=>setSelectedSubstituteId(e.target.value)} className="form-input" style={{ width:"100%", borderRadius:12 }}>
                          <option value="">Choose Agent</option>
@@ -118,6 +118,7 @@ const Substitution = () => {
           <div style={{ padding:"24px", background:"var(--surface-2)", borderBottom:"1px solid var(--border-light)" }}>
              <h3 style={{ margin:0, fontSize:16, fontWeight:800, color:"var(--text-primary)" }}>Instantiated Bypasses ({selectedDate})</h3>
           </div>
+        <div className="table-scroll-wrapper">
           <table style={{ width:"100%", borderCollapse:"collapse" }}>
              <thead><tr>
                 <th style={{ padding:"16px 24px", textAlign:"left", fontSize:11, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase", borderBottom:"1px solid var(--border-subtle)" }}>Node Frame</th>
@@ -145,6 +146,7 @@ const Substitution = () => {
                 })}
              </tbody>
           </table>
+        </div>
        </div>
     </div>
   );

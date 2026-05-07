@@ -42,7 +42,9 @@ const Calendar = () => {
   const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
 
   const getCalendarDays = () => {
-    const days = []; const id = startOfMonth.getDay();
+    const days = [];
+    // Monday-first: Mon=0, Tue=1, ..., Sun=6
+    const id = (startOfMonth.getDay() + 6) % 7;
     for(let i=0; i<id; i++) days.push(null);
     for(let i=1; i<=endOfMonth.getDate(); i++) days.push(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i));
     return days;
@@ -60,7 +62,7 @@ const Calendar = () => {
     } catch(err) {}
   };
 
-  const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const days = getCalendarDays();
 
   const getColor = (s) => s === "HOLIDAY" ? "#fee2e2" : s === "HALF_DAY" ? "#fef3c7" : s === "SUNDAY" ? "#f1f5f9" : s === "WORKING" ? "#e0e7ff" : "transparent";
@@ -73,10 +75,10 @@ const Calendar = () => {
           <p style={{ margin:0, fontSize:14, color:"var(--text-secondary)", fontWeight:500 }}>Establish calendar logic, holidays, and automatic generation rules.</p>
        </div>
 
-       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:24, marginBottom:32 }}>
+       <div className="grid-2-col-responsive" style={{ marginBottom:32 }}>
           <div style={{ background:"var(--surface-1)", borderRadius:24, padding:32, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)" }}>
              <h3 style={{ fontSize:15, fontWeight:800, margin:"0 0 20px" }}>Mass Extrapolation</h3>
-             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
+             <div className="grid-2-col-responsive" style={{ gap:12, marginBottom:16 }}>
                 <div><label style={{ fontSize:10, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase" }}>Init Date</label><input type="date" name="startDate" className="form-input" style={{ width:"100%" }} value={generateForm.startDate} onChange={handleGenerateChange} /></div>
                 <div><label style={{ fontSize:10, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase" }}>End Date</label><input type="date" name="endDate" className="form-input" style={{ width:"100%" }} value={generateForm.endDate} onChange={handleGenerateChange} /></div>
              </div>
@@ -86,7 +88,7 @@ const Calendar = () => {
 
           <div style={{ background:"var(--surface-1)", borderRadius:24, padding:32, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)" }}>
              <h3 style={{ fontSize:15, fontWeight:800, margin:"0 0 20px" }}>Manual Point Override</h3>
-             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
+             <div className="grid-2-col-responsive" style={{ gap:12, marginBottom:16 }}>
                 <div><label style={{ fontSize:10, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase" }}>Target Entity</label><input type="date" name="date" className="form-input" style={{ width:"100%" }} value={form.date} onChange={handleChange} /></div>
                 <div><label style={{ fontSize:10, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase" }}>State Classification</label><select name="status" className="form-input" style={{ width:"100%" }} value={form.status} onChange={handleChange}><option value="WORKING">Working</option><option value="HOLIDAY">Holiday</option><option value="HALF_DAY">Half Day</option></select></div>
              </div>
@@ -109,25 +111,27 @@ const Calendar = () => {
                 <button onClick={()=>changeMonth(1)} style={{ width:40, height:40, borderRadius:"50%", background:"var(--surface-2)", border:"none", fontWeight:800, cursor:"pointer" }}>→</button>
              </div>
 
-             <div style={{ display:"grid", gridTemplateColumns:"repeat(7, 1fr)", gap:12 }}>
-                {weekdays.map(w => <div key={w} style={{ textAlign:"center", fontSize:11, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"1px", paddingBottom:12 }}>{w}</div>)}
-                {days.map((date, idx) => {
-                   const stat = getDayStatus(date);
-                   const dtStr = date?.toISOString().split("T")[0];
-                   return (
-                      <div key={idx} onClick={()=>date && setEditingDate(dtStr)} style={{ aspectRatio:"1/1", borderRadius:16, border:date?"1px solid var(--border-medium)":"none", background:getColor(stat), display:"flex", flexDirection:"column", padding:12, position:"relative", cursor:date?"pointer":"default", transition:"transform 0.2s" }} onMouseEnter={e=>{if(date)e.currentTarget.style.transform="scale(1.03)"}} onMouseLeave={e=>{if(date)e.currentTarget.style.transform="scale(1)"}}>
-                         {date && <span style={{ fontSize:15, fontWeight:800, color:getTextColor(stat) }}>{date.getDate()}</span>}
-                         
-                         {editingDate === dtStr ? (
-                            <select autoFocus onBlur={()=>setEditingDate(null)} onChange={e=>updateDayStatus(dtStr, e.target.value)} style={{ position:"absolute", bottom:10, left:10, right:10, width:"calc(100% - 20px)", padding:4, fontSize:10, borderRadius:4, outline:"none", border:"1px solid var(--primary-color)" }} value={stat || "WORKING"}>
-                               <option value="WORKING">Work</option><option value="HOLIDAY">Hol</option><option value="HALF_DAY">Half</option>
-                            </select>
-                         ) : (
-                            stat && <span style={{ position:"absolute", bottom:12, left:12, fontSize:10, fontWeight:800, color:getTextColor(stat), textTransform:"uppercase" }}>{stat.slice(0,4)}</span>
-                         )}
-                      </div>
-                   )
-                })}
+             <div className="table-scroll-wrapper">
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(7, 1fr)", gap:12, minWidth:700 }}>
+                   {weekdays.map(w => <div key={w} style={{ textAlign:"center", fontSize:11, fontWeight:800, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"1px", paddingBottom:12 }}>{w}</div>)}
+                   {days.map((date, idx) => {
+                      const stat = getDayStatus(date);
+                      const dtStr = date?.toISOString().split("T")[0];
+                      return (
+                         <div key={idx} onClick={()=>date && setEditingDate(dtStr)} style={{ aspectRatio:"1/1", borderRadius:16, border:date?"1px solid var(--border-medium)":"none", background:getColor(stat), display:"flex", flexDirection:"column", padding:12, position:"relative", cursor:date?"pointer":"default", transition:"transform 0.2s" }} onMouseEnter={e=>{if(date)e.currentTarget.style.transform="scale(1.03)"}} onMouseLeave={e=>{if(date)e.currentTarget.style.transform="scale(1)"}}>
+                            {date && <span style={{ fontSize:15, fontWeight:800, color:getTextColor(stat) }}>{date.getDate()}</span>}
+                            
+                            {editingDate === dtStr ? (
+                               <select autoFocus onBlur={()=>setEditingDate(null)} onChange={e=>updateDayStatus(dtStr, e.target.value)} style={{ position:"absolute", bottom:10, left:10, right:10, width:"calc(100% - 20px)", padding:4, fontSize:10, borderRadius:4, outline:"none", border:"1px solid var(--primary-color)" }} value={stat || "WORKING"}>
+                                  <option value="WORKING">Work</option><option value="HOLIDAY">Hol</option><option value="HALF_DAY">Half</option>
+                               </select>
+                            ) : (
+                               stat && <span style={{ position:"absolute", bottom:12, left:12, fontSize:10, fontWeight:800, color:getTextColor(stat), textTransform:"uppercase" }}>{stat.slice(0,4)}</span>
+                            )}
+                         </div>
+                      )
+                   })}
+                </div>
              </div>
           </div>
        )}

@@ -118,7 +118,7 @@ const AdminTransportPage = () => {
 
        {msg && <div style={{ background:"var(--text-primary)", color:"white", padding:16, borderRadius:16, marginBottom:32, fontWeight:800, animation:"slideDown 0.3s ease" }}>{msg}</div>}
 
-       <div style={{ display:"grid", gridTemplateColumns:"380px 1fr", gap:40, alignItems:"start" }}>
+       <div className="responsive-grid-transport">
           
           <div style={{ display:"flex", flexDirection:"column", gap:24 }}>
              
@@ -160,27 +160,46 @@ const AdminTransportPage = () => {
                  </div>
               </div>
 
-              {proposedStops.length > 0 && (
-                 <div style={{ background:"var(--surface-1)", padding:24, borderRadius:24, border:"1px solid #8b5cf6", boxShadow:"0 4px 12px rgba(139,92,246,0.1)" }}>
-                    <h3 style={{ fontSize:15, fontWeight:800, margin:"0 0 8px", color:"#8b5cf6" }}>Pending Stop Proposals</h3>
-                    <p style={{ fontSize:12, color:"var(--text-secondary)", marginBottom:16 }}>Review locations marked dynamically by drivers en-route.</p>
-                    <div style={{ display:"flex", flexDirection:"column", gap:12, maxHeight: 200, overflowY: "auto" }}>
+              <div style={{ background:"var(--surface-1)", padding:24, borderRadius:24, border:`1px solid ${proposedStops.length > 0 ? "#8b5cf6" : "var(--border-light)"}`, boxShadow: proposedStops.length > 0 ? "0 4px 16px rgba(139,92,246,0.15)" : "var(--shadow-sm)", transition:"border 0.3s" }}>
+                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
+                    <h3 style={{ fontSize:15, fontWeight:800, margin:0, color: proposedStops.length > 0 ? "#8b5cf6" : "var(--text-primary)" }}>
+                       🚏 Stop Requests from Drivers
+                    </h3>
+                    {proposedStops.length > 0 && (
+                       <span style={{ background:"#8b5cf6", color:"white", borderRadius:99, padding:"2px 10px", fontSize:12, fontWeight:800 }}>
+                          {proposedStops.length} Pending
+                       </span>
+                    )}
+                 </div>
+                 <p style={{ fontSize:12, color:"var(--text-secondary)", marginBottom:16, margin:"0 0 16px" }}>
+                    {proposedStops.length === 0
+                      ? "No pending stop requests from drivers."
+                      : "Drivers have proposed new stops on their route. Review and approve below."}
+                 </p>
+                 {proposedStops.length === 0 ? (
+                    <div style={{ textAlign:"center", padding:"20px 0", color:"var(--text-tertiary)", fontSize:13 }}>✅ All clear — no pending requests.</div>
+                 ) : (
+                    <div style={{ display:"flex", flexDirection:"column", gap:12, maxHeight:260, overflowY:"auto" }}>
                        {proposedStops.map(s => (
-                          <div key={s.id} style={{ background:"var(--surface-2)", padding:12, borderRadius:12, border:"1px solid var(--border-light)" }}>
-                             <div style={{ fontSize:14, fontWeight:800 }}>{s.stopName}</div>
-                             <div style={{ fontSize:11, color:"var(--text-muted)", marginTop:4, marginBottom:12 }}>
-                                Route: {routes.find(r => r.id === s.routeId)?.routeName || "N/A"}<br/>
-                                Loc: {s.latitude.toFixed(4)}, {s.longitude.toFixed(4)}
+                          <div key={s.id} style={{ background:"var(--surface-2)", padding:14, borderRadius:12, border:"1px solid var(--border-light)" }}>
+                             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:6 }}>
+                                <div style={{ fontSize:14, fontWeight:800 }}>{s.stopName}</div>
+                                <span style={{ fontSize:10, background:"rgba(139,92,246,0.1)", color:"#8b5cf6", padding:"2px 8px", borderRadius:6, fontWeight:700 }}>PENDING</span>
+                             </div>
+                             <div style={{ fontSize:12, color:"var(--text-muted)", marginBottom:10, lineHeight:1.6 }}>
+                                <span style={{ fontWeight:700 }}>Route:</span> {s.route?.routeName || "Unknown"}<br/>
+                                <span style={{ fontWeight:700 }}>Order:</span> #{s.stopOrder} &nbsp;
+                                <span style={{ fontWeight:700 }}>Coords:</span> {s.latitude?.toFixed(4)}, {s.longitude?.toFixed(4)}
                              </div>
                              <div style={{ display:"flex", gap:8 }}>
-                                <button onClick={()=>handleApproveStop(s)} style={{ flex:1, padding:"8px", background:"#10b981", color:"white", borderRadius:8, border:"none", fontWeight:800, fontSize:12, cursor:"pointer" }}>Approve</button>
-                                <button onClick={()=>handleRejectStop(s.id)} style={{ flex:1, padding:"8px", background:"transparent", color:"#ef4444", borderRadius:8, border:"1px solid #ef4444", fontWeight:800, fontSize:12, cursor:"pointer" }}>Reject</button>
+                                <button onClick={()=>handleApproveStop(s)} style={{ flex:1, padding:"8px", background:"#10b981", color:"white", borderRadius:8, border:"none", fontWeight:800, fontSize:12, cursor:"pointer" }}>✓ Approve</button>
+                                <button onClick={()=>handleRejectStop(s.id)} style={{ flex:1, padding:"8px", background:"transparent", color:"#ef4444", borderRadius:8, border:"1px solid #ef4444", fontWeight:800, fontSize:12, cursor:"pointer" }}>✕ Reject</button>
                              </div>
                           </div>
                        ))}
                     </div>
-                 </div>
-              )}
+                 )}
+              </div>
 
              <div style={{ background:"var(--surface-1)", padding:24, borderRadius:24, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)" }}>
                 <h3 style={{ fontSize:15, fontWeight:800, margin:"0 0 16px" }}>Add Stop To Route</h3>

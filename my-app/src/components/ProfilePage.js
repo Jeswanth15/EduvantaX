@@ -131,7 +131,7 @@ const ProfilePage = () => {
       </div>
 
       {/* ── Two Column Grid ── */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:22, marginBottom:22 }}>
+      <div className="grid-2-col-responsive" style={{ marginBottom: 22 }}>
 
         {/* Personal Info */}
         <div style={{ background:"var(--surface-1)", borderRadius:20, border:"1px solid var(--border-light)", boxShadow:"var(--shadow-sm)", overflow:"hidden" }}>

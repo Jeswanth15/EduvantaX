@@ -126,7 +126,7 @@ const TeacherDashboard = () => {
       </div>
 
       {/* Grid Layout */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 340px", gap:28 }}>
+      <div className="responsive-grid-main">
         
         {/* Main Column */}
         <div style={{ display:"flex", flexDirection:"column", gap:28 }}>
@@ -201,10 +201,10 @@ const TeacherDashboard = () => {
              <div style={{ padding:"16px 20px", borderBottom:"1px solid var(--border-subtle)" }}>
                <h3 style={{ fontSize:14, fontWeight:800, color:"var(--text-primary)", margin:0 }}>Educator Tools</h3>
              </div>
-             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:1, background:"var(--border-subtle)" }}>
+             <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(130px, 1fr))", gap:1, background:"var(--border-subtle)" }}>
                {[
-                 {l:"Assignments", i:"📝", c:"#3b82f6", r:"/assignments"}, {l:"Marks Entry", i:"💯", c:"#10b981", r:"/marks"},
-                 {l:"Attendance", i:"📋", c:"#f59e0b", r:"/attendance"}, {l:"Syllabus", i:"📚", c:"#8b5cf6", r:"/syllabus"}
+                 {l:"Assignments", i:"📝", c:"#3b82f6", r:"/teacher/assignments"}, {l:"Marks Entry", i:"💯", c:"#10b981", r:"/teacher/marks"},
+                 {l:"Attendance", i:"📋", c:"#f59e0b", r:"/teacher/attendance"}, {l:"Syllabus", i:"📚", c:"#8b5cf6", r:"/teacher/syllabus"}
                ].map(btn => (
                  <div key={btn.l} onClick={()=>navigate(btn.r)} style={{ background:"var(--surface-1)", padding:"24px 16px", display:"flex", flexDirection:"column", alignItems:"center", gap:10, cursor:"pointer", transition:"all 0.2s" }} onMouseEnter={e=>e.currentTarget.style.background="var(--surface-2)"} onMouseLeave={e=>e.currentTarget.style.background="var(--surface-1)"}>
                    <div style={{ width:40, height:40, borderRadius:12, background:`${btn.c}15`, color:btn.c, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18 }}>{btn.i}</div>

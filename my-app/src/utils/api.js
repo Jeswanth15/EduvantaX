@@ -78,6 +78,13 @@ export const getAllClassSubjects = () =>
 export const deleteClassSubject = (id) =>
   axios.delete(`${API_BASE}/api/class-subjects/delete/${id}`, config());
 
+export const updateClassSubject = (id, teacherId) =>
+  axios.put(
+    `${API_BASE}/api/class-subjects/update/${id}${teacherId ? `?teacherId=${teacherId}` : ''}`,
+    null,
+    config()
+  );
+
 // ---------------- ENROLLMENTS ----------------
 export const enrollStudent = (data) =>
   axios.post(`${API_BASE}/api/enrollments/enroll`, data, config());
