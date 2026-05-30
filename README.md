@@ -28,7 +28,7 @@ Clean. Professional. Eye-catching on GitHub.
 
 > EDU converts disconnected academic tasks into a **single, structured, and reliable digital ecosystem**.
 
-* ✅ **Eliminates manual attendance and paper-based records**
+* ✅ **Eliminates paper-based records**
 * ✅ **Simplifies timetable and academic scheduling**
 * ✅ **Organizes assignments, submissions, and evaluations**
 * ✅ **Centralizes announcements and academic communication**
